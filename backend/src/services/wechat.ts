@@ -192,12 +192,13 @@ export class WechatService {
         }
       );
 
-      if (response.data.errcode && response.data.errcode !== 0) {
-        throw new Error(`批量获取用户信息失败: ${response.data.errmsg}`);
+      const responseData = response.data as any;
+      if (responseData.errcode && responseData.errcode !== 0) {
+        throw new Error(`批量获取用户信息失败: ${responseData.errmsg}`);
       }
 
       logger.info('批量获取用户信息成功', { count: userList.length });
-      return response.data.user_info_list;
+      return responseData.user_info_list;
     } catch (error) {
       logger.error('批量获取用户信息失败', error);
       throw error;

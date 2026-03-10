@@ -48,7 +48,7 @@ export class SmsService {
         return false;
       }
 
-      const request = new Dysmsapi.SendSmsRequest({
+      const request = new (Dysmsapi as any).SendSmsRequest({
         phoneNumbers: phone,
         signName: this.signName,
         templateCode: this.templateCode,
@@ -87,7 +87,7 @@ export class SmsService {
     params: Record<string, string>
   ): Promise<boolean> {
     try {
-      const request = new Dysmsapi.SendSmsRequest({
+      const request = new (Dysmsapi as any).SendSmsRequest({
         phoneNumbers: phone,
         signName: this.signName,
         templateCode: templateCode,

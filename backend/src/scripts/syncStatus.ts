@@ -30,7 +30,7 @@ export async function syncAllStatus() {
       WHERE ei.openid IN (SELECT openid FROM follow_records WHERE status = 1)`
     );
     
-    logger.info(`✅ 更新员工关注状态：${update1[0].affectedRows} 条`);
+    logger.info(`✅ 更新员工关注状态：${(update1[0] as any).affectedRows} 条`);
 
     // 2. 更新关注记录的员工信息
     const update2 = await connection.query(
@@ -42,7 +42,7 @@ export async function syncAllStatus() {
       WHERE fr.status = 1`
     );
     
-    logger.info(`✅ 更新关注记录员工信息：${update2[0].affectedRows} 条`);
+    logger.info(`✅ 更新关注记录员工信息：${(update2[0] as any).affectedRows} 条`);
 
     // ========================================
     // 方向2：关注记录 → 员工信息
@@ -61,7 +61,7 @@ export async function syncAllStatus() {
       WHERE fr.status = 1`
     );
     
-    logger.info(`✅ 更新关注记录员工标记：${update3[0].affectedRows} 条`);
+    logger.info(`✅ 更新关注记录员工标记：${(update3[0] as any).affectedRows} 条`);
 
     // 4. 更新员工信息的关注状态（对于取消关注的）
     const update4 = await connection.query(
@@ -71,7 +71,7 @@ export async function syncAllStatus() {
           ei.follow_time = CASE WHEN fr.openid IS NOT NULL AND fr.status = 1 THEN fr.subscribe_time ELSE NULL END`
     );
     
-    logger.info(`✅ 更新员工关注状态：${update4[0].affectedRows} 条`);
+    logger.info(`✅ 更新员工关注状态：${(update4[0] as any).affectedRows} 条`);
 
     await connection.commit();
 
