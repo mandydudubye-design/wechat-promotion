@@ -1,0 +1,180 @@
+// 所有公众号统计页面样式
+
+.all-accounts-stats-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: 30px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 16px;
+  color: #999;
+}
+
+.navbar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar-back {
+  font-size: 20px;
+  cursor: pointer;
+  width: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-title {
+  flex: 1;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.navbar-action {
+  width: 40px;
+}
+
+.summary-stats-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin: 16px;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  color: white;
+}
+
+.summary-stats-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.summary-icon {
+  font-size: 24px;
+}
+
+.summary-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.summary-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.summary-stat-item {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summary-stat-value {
+  font-size: 28px;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.summary-stat-label {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.sort-selector {
+  background: white;
+  margin: 0 16px 16px;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sort-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  white-space: nowrap;
+}
+
+.sort-options {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+
+.sort-option {
+  flex: 1;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.sort-option.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 500;
+}
+
+.sort-option:hover:not(.active) {
+  background: #f0f0f0;
+}
+
+.accounts-stats-list {
+  padding: 0 0 16px;
+}
+
+.accounts-stats-list .account-stats-card {
+  margin: 0 16px 16px;
+}
+
+/* 响应式适配 */
+@media (max-width: 480px) {
+  .summary-stats-card {
+    padding: 20px;
+  }
+
+  .summary-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .summary-stat-value {
+    font-size: 24px;
+  }
+
+  .sort-selector {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sort-options {
+    gap: 6px;
+  }
+
+  .sort-option {
+    padding: 10px;
+    font-size: 12px;
+  }
+}

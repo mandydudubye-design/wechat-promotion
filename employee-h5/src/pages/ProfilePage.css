@@ -1,0 +1,251 @@
+.profile-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: 30px;
+}
+
+.loading-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  color: #666;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f0f0f0;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.navbar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar-back {
+  font-size: 20px;
+  cursor: pointer;
+  width: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-title {
+  flex: 1;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.navbar-action {
+  width: 40px;
+}
+
+.user-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin: 16px;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.user-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-text {
+  font-size: 28px;
+  font-weight: bold;
+  color: #667eea;
+}
+
+.user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.user-detail {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.user-status {
+  flex-shrink: 0;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+}
+
+.menu-section {
+  margin: 16px 16px 0;
+}
+
+.menu-title {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+.menu-list {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-item:active {
+  background: #fafafa;
+}
+
+.menu-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.menu-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  color: #667eea;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.menu-title-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.menu-description {
+  font-size: 12px;
+  color: #999;
+}
+
+.menu-arrow {
+  color: #ccc;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.logout-section {
+  margin: 24px 16px 16px;
+}
+
+.logout-btn {
+  width: 100%;
+  height: 48px;
+  background: white;
+  color: #ff4d4f;
+  border: 1px solid #ff4d4f;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+
+.logout-btn:active {
+  background: #fff1f0;
+}
+
+.version-info {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* 适配小屏幕 */
+@media screen and (max-width: 375px) {
+  .user-card {
+    padding: 20px;
+  }
+
+  .user-avatar {
+    width: 56px;
+    height: 56px;
+  }
+
+  .avatar-text {
+    font-size: 24px;
+  }
+
+  .user-name {
+    font-size: 18px;
+  }
+}

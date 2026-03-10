@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>员工信息登记</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 500px;
+      animation: slideIn 0.5s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h1 {
+      font-size: 26px;
+      color: #333;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: #666;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      color: #555;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    label .required {
+      color: #e74c3c;
+      margin-left: 4px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 16px;
+      transition: all 0.3s;
+      background: #fafafa;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .message {
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 20px;
+      font-size: 14px;
+      text-align: center;
+      display: none;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+
+    .message.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+      display: block;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .follow-status {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 12px;
+      background: #f8f9fa;
+      display: none;
+    }
+
+    .follow-status.followed {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .follow-status.not-followed {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+
+    .follow-status h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .follow-status p {
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .tip {
+      font-size: 12px;
+      color: #999;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📝 员工信息登记</h1>
+    <p class="subtitle">请填写您的信息完成登记</p>
+
+    <form id="registerForm" onsubmit="return false;">
+      <div class="form-group">
+        <label>工号<span class="required">*</span></label>
+        <input 
+          type="text" 
+          id="employeeId" 
+          placeholder="例如：EMP001" 
+          required
+          autocomplete="off"
+        />
+        <p class="tip">请输入您的工号</p>
+      </div>
+
+      <div class="form-group">
+        <label>姓名<span class="required">*</span></label>
+        <input 
+          type="text" 
+          id="name" 
+          placeholder="请输入真实姓名" 
+          required
+          autocomplete="name"
+        />
+        <p class="tip">请输入真实姓名</p>
+      </div>
+
+      <div class="form-group">
+        <label>手机号<span class="required">*</span></label>
+        <input 
+          type="tel" 
+          id="phone" 
+          placeholder="请输入手机号" 
+          required
+          autocomplete="tel"
+          maxlength="11"
+        />
+        <p class="tip">请输入11位手机号</p>
+      </div>
+
+      <div class="form-group">
+        <label>部门</label>
+        <input 
+          type="text" 
+          id="department" 
+          placeholder="例如：技术部" 
+          autocomplete="organization"
+        />
+        <p class="tip">选填</p>
+      </div>
+
+      <div class="form-group">
+        <label>职位</label>
+        <input 
+          type="text" 
+          id="position" 
+          placeholder="例如：工程师" 
+          autocomplete="organization-title"
+        />
+        <p class="tip">选填</p>
+      </div>
+
+      <button id="submitBtn" type="submit" onclick="register()">
+        ✅ 提交登记
+      </button>
+    </form>
+
+    <div id="message" class="message"></div>
+
+    <div id="followStatus" class="follow-status">
+      <h3 id="statusTitle"></h3>
+      <p id="statusText"></p>
+    </div>
+  </div>
+
+  <script>
+    // 从URL获取OpenID
+    const urlParams = new URLSearchParams(window.location.search);
+    const openid = urlParams.get('openid');
+
+    if (!openid) {
+      showError('无法获取用户信息，请从公众号菜单进入');
+      document.getElementById('submitBtn').disabled = true;
+    }
+
+    // 页面加载时检查是否已登记
+    window.addEventListener('load', async () => {
+      if (openid) {
+        await checkRegistration();
+      }
+    });
+
+    async function checkRegistration() {
+      try {
+        const response = await fetch(`/api/employee-info/check/${openid}`);
+        const result = await response.json();
+
+        if (result.code === 200 && result.data.registered) {
+          // 已登记，显示信息
+          showInfo(`您已登记：${result.data.name}（${result.data.employee_id}）`);
+          
+          // 显示关注状态
+          showFollowStatus(result.data.is_followed, result.data.follow_time);
+          
+          // 禁用表单
+          document.getElementById('employeeId').value = result.data.employee_id;
+          document.getElementById('name').value = result.data.name;
+          document.getElementById('phone').value = result.data.phone;
+          document.getElementById('department').value = result.data.department || '';
+          document.getElementById('position').value = result.data.position || '';
+          
+          const inputs = document.querySelectorAll('input');
+          inputs.forEach(input => input.disabled = true);
+          
+          document.getElementById('submitBtn').textContent = '✅ 已登记';
+          document.getElementById('submitBtn').disabled = true;
+        }
+      } catch (error) {
+        console.error('检查登记状态失败:', error);
+      }
+    }
+
+    async function register() {
+      const employeeId = document.getElementById('employeeId').value.trim();
+      const name = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const department = document.getElementById('department').value.trim();
+      const position = document.getElementById('position').value.trim();
+
+      // 验证输入
+      if (!employeeId) {
+        showError('请输入工号');
+        return;
+      }
+
+      if (!name) {
+        showError('请输入姓名');
+        return;
+      }
+
+      if (!phone) {
+        showError('请输入手机号');
+        return;
+      }
+
+      if (!/^1[3-9]\d{9}$/.test(phone)) {
+        showError('请输入正确的手机号');
+        return;
+      }
+
+      // 禁用按钮，显示加载状态
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="loading"></span>提交中...';
+
+      try {
+        const response = await fetch('/api/employee-info/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            openid, 
+            employee_id: employeeId, 
+            name, 
+            phone,
+            department,
+            position
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.code === 200) {
+          showSuccess(`登记成功！${result.data.name}`);
+          
+          // 显示关注状态
+          showFollowStatus(result.data.is_followed, result.data.follow_time);
+          
+          // 禁用表单
+          const inputs = document.querySelectorAll('input');
+          inputs.forEach(input => input.disabled = true);
+          
+          submitBtn.textContent = '✅ 已登记';
+        } else {
+          showError(result.message || '登记失败');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '✅ 提交登记';
+        }
+      } catch (error) {
+        showError('网络错误，请稍后重试');
+        console.error(error);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '✅ 提交登记';
+      }
+    }
+
+    function showFollowStatus(isFollowed, followTime) {
+      const statusDiv = document.getElementById('followStatus');
+      const statusTitle = document.getElementById('statusTitle');
+      const statusText = document.getElementById('statusText');
+
+      statusDiv.style.display = 'block';
+
+      if (isFollowed) {
+        statusDiv.className = 'follow-status followed';
+        statusTitle.textContent = '✅ 已关注公众号';
+        statusText.textContent = `关注时间：${followTime || '未知'}`;
+      } else {
+        statusDiv.className = 'follow-status not-followed';
+        statusTitle.textContent = '⚠️ 未关注公众号';
+        statusText.textContent = '请返回关注公众号';
+      }
+    }
+
+    function showError(message) {
+      const messageEl = document.getElementById('message');
+      messageEl.textContent = '❌ ' + message;
+      messageEl.className = 'message error';
+      messageEl.style.display = 'block';
+      
+      setTimeout(() => {
+        messageEl.style.display = 'none';
+      }, 5000);
+    }
+
+    function showSuccess(message) {
+      const messageEl = document.getElementById('message');
+      messageEl.textContent = '✅ ' + message;
+      messageEl.className = 'message success';
+      messageEl.style.display = 'block';
+    }
+
+    function showInfo(message) {
+      const messageEl = document.getElementById('message');
+      messageEl.textContent = 'ℹ️ ' + message;
+      messageEl.className = 'message info';
+      messageEl.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

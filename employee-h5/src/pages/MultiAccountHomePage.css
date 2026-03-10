@@ -1,0 +1,207 @@
+// 多账号首页样式
+
+.multi-account-home-page {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: 30px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 16px;
+  color: #999;
+}
+
+.all-accounts-stats {
+  background: white;
+  margin: 0 16px 16px;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.all-accounts-stats:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+}
+
+.all-accounts-stats:active {
+  transform: translateY(0);
+}
+
+.all-accounts-stats-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.all-accounts-stats-header .anticon {
+  color: #667eea;
+  font-size: 18px;
+}
+
+.all-accounts-stats-desc {
+  font-size: 13px;
+  color: #666;
+}
+
+.qrcode-card {
+  background: white;
+  margin: 0 16px 16px;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.qrcode-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.qrcode-box {
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 16px;
+}
+
+.qrcode-tip {
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.action-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 44px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: none;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.action-btn.primary:active {
+  opacity: 0.8;
+}
+
+.action-btn.secondary {
+  background: white;
+  color: #667eea;
+  border: 1px solid #667eea;
+}
+
+.action-btn.secondary:active {
+  background: #f5f5f5;
+}
+
+.menu-section {
+  margin: 0 16px;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 1px solid transparent;
+}
+
+.menu-item:active {
+  transform: scale(0.98);
+  background: #fafafa;
+  border-color: #667eea;
+}
+
+.menu-icon-custom {
+  font-size: 28px;
+  color: #667eea;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.menu-item-content {
+  flex: 1;
+}
+
+.menu-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+}
+
+.menu-desc {
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.footer-tip {
+  text-align: center;
+  padding: 20px;
+  font-size: 12px;
+  color: #999;
+}
+
+/* 响应式适配 */
+@media (max-width: 480px) {
+  .qrcode-card {
+    padding: 20px;
+  }
+
+  .action-buttons {
+    gap: 10px;
+  }
+
+  .action-btn {
+    height: 42px;
+    font-size: 14px;
+  }
+
+  .menu-icon-custom {
+    font-size: 24px;
+    padding: 10px;
+  }
+}

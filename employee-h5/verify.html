@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>员工身份验证</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 30px 20px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .icon {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 15px;
+      font-size: 30px;
+      color: white;
+    }
+
+    h1 {
+      font-size: 22px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    input {
+      width: 100%;
+      height: 48px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 0 15px;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .code-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .code-group input {
+      flex: 1;
+    }
+
+    button {
+      width: 100%;
+      height: 48px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+      background: #f5f5f5;
+      color: #666;
+      white-space: nowrap;
+      padding: 0 15px;
+    }
+
+    .btn-secondary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-loading {
+      opacity: 0.7;
+      cursor: wait;
+    }
+
+    .tips {
+      margin-top: 25px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .tips h3 {
+      font-size: 13px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .tips ul {
+      padding-left: 20px;
+    }
+
+    .tips li {
+      margin-bottom: 5px;
+    }
+
+    .message {
+      padding: 12px 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+
+    .shake {
+      animation: shake 0.3s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="icon">👤</div>
+      <h1>员工身份验证</h1>
+      <p class="subtitle">验证您的员工身份以享受专属权益</p>
+    </div>
+
+    <div id="message" class="message"></div>
+
+    <form id="verifyForm">
+      <div class="form-group">
+        <label for="phone">手机号</label>
+        <input 
+          type="tel" 
+          id="phone" 
+          name="phone" 
+          placeholder="请输入公司登记的手机号"
+          maxlength="11"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="code">验证码</label>
+        <div class="code-group">
+          <input 
+            type="text" 
+            id="code" 
+            name="code" 
+            placeholder="请输入验证码"
+            maxlength="6"
+            required
+          >
+          <button type="button" id="sendCodeBtn" class="btn-secondary">发送验证码</button>
+        </div>
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn-primary">验证</button>
+    </form>
+
+    <div class="tips">
+      <h3>📝 说明：</h3>
+      <ul>
+        <li>验证后将绑定您的员工身份</li>
+        <li>手机号必须是公司登记的手机号</li>
+        <li>验证码5分钟内有效</li>
+        <li>如有问题请联系管理员</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:3000/api/employee-binding';
+    let countdown = 0;
+    let countdownTimer = null;
+
+    // 从URL参数或localStorage获取openid
+    function getOpenid() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const openid = urlParams.get('openid') || localStorage.getItem('openid') || '';
+      if (openid && !localStorage.getItem('openid')) {
+        localStorage.setItem('openid', openid);
+      }
+      return openid;
+    }
+
+    const openid = getOpenid();
+
+    // 显示消息
+    function showMessage(text, type = 'success') {
+      const messageEl = document.getElementById('message');
+      messageEl.textContent = text;
+      messageEl.className = `message ${type} show`;
+      
+      setTimeout(() => {
+        messageEl.classList.remove('show');
+      }, 5000);
+    }
+
+    // 发送验证码
+    document.getElementById('sendCodeBtn').addEventListener('click', async function() {
+      const phone = document.getElementById('phone').value.trim();
+      
+      if (!phone) {
+        showMessage('请输入手机号', 'error');
+        document.getElementById('phone').classList.add('shake');
+        setTimeout(() => document.getElementById('phone').classList.remove('shake'), 300);
+        return;
+      }
+
+      if (!/^1[3-9]\d{9}$/.test(phone)) {
+        showMessage('请输入正确的手机号', 'error');
+        document.getElementById('phone').classList.add('shake');
+        setTimeout(() => document.getElementById('phone').classList.remove('shake'), 300);
+        return;
+      }
+
+      const btn = this;
+      btn.disabled = true;
+      btn.classList.add('btn-loading');
+      btn.textContent = '发送中...';
+
+      try {
+        const response = await fetch(`${API_BASE}/send-code`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone })
+        });
+
+        const result = await response.json();
+
+        if (result.code === 200) {
+          showMessage('验证码已发送', 'success');
+          
+          // 开发环境显示验证码
+          if (result.data && result.data.code) {
+            setTimeout(() => {
+              showMessage(`开发环境验证码：${result.data.code}`, 'success');
+            }, 1000);
+          }
+
+          // 开始倒计时
+          countdown = 60;
+          countdownTimer = setInterval(() => {
+            countdown--;
+            btn.textContent = `${countdown}秒后重试`;
+            
+            if (countdown <= 0) {
+              clearInterval(countdownTimer);
+              btn.disabled = false;
+              btn.classList.remove('btn-loading');
+              btn.textContent = '发送验证码';
+            }
+          }, 1000);
+        } else {
+          showMessage(result.message || '发送失败', 'error');
+          btn.disabled = false;
+          btn.classList.remove('btn-loading');
+          btn.textContent = '发送验证码';
+        }
+      } catch (error) {
+        showMessage('网络错误，请稍后重试', 'error');
+        btn.disabled = false;
+        btn.classList.remove('btn-loading');
+        btn.textContent = '发送验证码';
+      }
+    });
+
+    // 提交验证
+    document.getElementById('verifyForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const phone = document.getElementById('phone').value.trim();
+      const code = document.getElementById('code').value.trim();
+
+      if (!phone || !code) {
+        showMessage('请填写完整信息', 'error');
+        return;
+      }
+
+      if (!openid) {
+        showMessage('未获取到微信授权信息，请重新进入', 'error');
+        return;
+      }
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.classList.add('btn-loading');
+      submitBtn.textContent = '验证中...';
+
+      try {
+        const response = await fetch(`${API_BASE}/verify-code`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, code, openid })
+        });
+
+        const result = await response.json();
+
+        if (result.code === 200) {
+          showMessage(`验证成功！${result.data.name}，您已绑定员工身份`, 'success');
+          
+          setTimeout(() => {
+            // 验证成功后的操作
+            if (window.WeixinJSBridge) {
+              // 在微信中关闭窗口或跳转
+              window.WeixinJSBridge.call('closeWindow');
+            } else {
+              // 在浏览器中跳转
+              window.location.href = '/';
+            }
+          }, 2000);
+        } else {
+          showMessage(result.message || '验证失败', 'error');
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('btn-loading');
+          submitBtn.textContent = '验证';
+        }
+      } catch (error) {
+        showMessage('网络错误，请稍后重试', 'error');
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('btn-loading');
+        submitBtn.textContent = '验证';
+      }
+    });
+
+    // 检查是否已验证
+    async function checkStatus() {
+      if (!openid) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/status/${openid}`);
+        const result = await response.json();
+
+        if (result.code === 200 && result.data.is_bound && result.data.is_verified) {
+          showMessage(`您已验证员工身份：${result.data.employee.name}`, 'success');
+          
+          // 禁用表单
+          document.getElementById('phone').disabled = true;
+          document.getElementById('code').disabled = true;
+          document.getElementById('sendCodeBtn').disabled = true;
+          document.getElementById('submitBtn').disabled = true;
+          document.getElementById('submitBtn').textContent = '已验证';
+        }
+      } catch (error) {
+        console.error('检查状态失败', error);
+      }
+    }
+
+    // 页面加载时检查状态
+    checkStatus();
+  </script>
+</body>
+</html>

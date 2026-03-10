@@ -1,0 +1,92 @@
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 构建产物
+dist/
+dist-ssr/
+build/
+*.local
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 日志文件
+logs/
+*.log
+*.log.*
+
+# 操作系统文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE和编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-workspace
+
+# 测试覆盖率
+coverage/
+.nyc_output/
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+*.bak
+*.cache
+
+# 数据库文件
+*.sql.db
+*.sqlite
+*.db
+
+# 上传文件
+uploads/
+public/uploads/
+
+# 微信相关
+wechat_qrcodes/
+qrcodes/
+
+# Excel导出
+exports/
+*.xlsx
+*.xls
+
+# 打包文件
+*.tar.gz
+*.zip
+*.rar
+
+# 文档构建
+docs/_build/
+site/
+
+# Yarn
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# TypeScript
+*.tsbuildinfo

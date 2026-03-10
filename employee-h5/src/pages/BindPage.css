@@ -1,0 +1,178 @@
+.bind-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bind-header {
+  text-align: center;
+  color: white;
+  margin-bottom: 40px;
+  margin-top: 40px;
+}
+
+.bind-logo {
+  width: 80px;
+  height: 80px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  color: #667eea;
+  margin: 0 auto 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.bind-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.bind-subtitle {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.bind-form {
+  width: 100%;
+  max-width: 400px;
+  background: white;
+  border-radius: 16px;
+  padding: 30px 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.form-item {
+  margin-bottom: 20px;
+}
+
+.form-item-error .form-input {
+  border-color: #ff4d4f;
+}
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.form-input {
+  width: 100%;
+  height: 48px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 0 16px;
+  font-size: 16px;
+  transition: all 0.3s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.form-input:disabled {
+  background-color: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.form-error {
+  display: block;
+  color: #ff4d4f;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.submit-btn {
+  width: 100%;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 10px;
+}
+
+.submit-btn:active {
+  opacity: 0.8;
+}
+
+.submit-btn.loading {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bind-tips {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 30px;
+  backdrop-filter: blur(10px);
+}
+
+.tips-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.tips-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tips-list li {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.8;
+  padding-left: 16px;
+  position: relative;
+}
+
+.tips-list li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: #667eea;
+  font-weight: bold;
+}
+
+/* 适配小屏幕 */
+@media screen and (max-width: 375px) {
+  .bind-page {
+    padding: 30px 16px 20px;
+  }
+
+  .bind-form {
+    padding: 24px 20px;
+  }
+
+  .bind-logo {
+    width: 64px;
+    height: 64px;
+    font-size: 32px;
+  }
+
+  .bind-title {
+    font-size: 20px;
+  }
+}

@@ -1,0 +1,360 @@
+/* 优化版多账号首页样式 */
+
+.multi-account-home-optimized {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f5f7fa 0%, #e4e9f2 100%);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 16px;
+  color: #6b7280;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 顶部导航栏 */
+.home-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-back {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: #111827;
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 150ms;
+}
+
+.header-back:hover {
+  background: #f3f4f6;
+}
+
+.header-back:active {
+  transform: scale(0.95);
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.header-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* 统计卡片区域 */
+.stats-section {
+  margin-bottom: 8px;
+}
+
+/* 查看所有统计按钮 */
+.view-all-section {
+  padding: 0 16px;
+  margin-bottom: 20px;
+}
+
+.view-all-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color: #667eea;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.view-all-button:hover {
+  background: #f9fafb;
+  border-color: #667eea;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.view-all-button:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.view-all-button .anticon {
+  font-size: 16px;
+}
+
+/* 二维码区域 */
+.qr-section {
+  padding: 0 16px;
+  margin-bottom: 24px;
+}
+
+.qr-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+              0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.qr-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.qr-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.qr-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.qr-code-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.qr-code-container {
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+.qr-code-container svg {
+  display: block;
+}
+
+.qr-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.qr-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: white;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.qr-action-btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.qr-action-btn:active {
+  transform: scale(0.98);
+}
+
+.qr-action-btn.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+}
+
+.qr-action-btn.primary:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  transform: translateY(-1px);
+}
+
+.qr-action-btn.primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.qr-action-btn .anticon {
+  font-size: 16px;
+}
+
+/* 功能菜单区域 */
+.menu-section {
+  padding: 0 16px;
+  margin-bottom: 24px;
+}
+
+.menu-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.menu-item {
+  background: white;
+  border-radius: 12px;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid transparent;
+}
+
+.menu-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.menu-item:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.menu-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.menu-item-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.menu-item-desc {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* 底部安全区 */
+.safe-area-bottom {
+  height: env(safe-area-inset-bottom);
+  min-height: 20px;
+}
+
+/* 响应式适配 */
+@media (max-width: 480px) {
+  .home-header {
+    padding: 12px 16px;
+  }
+
+  .header-title {
+    font-size: 16px;
+  }
+
+  .qr-card {
+    padding: 20px;
+  }
+
+  .qr-code-container {
+    padding: 12px;
+  }
+
+  .menu-grid {
+    gap: 10px;
+  }
+
+  .menu-item {
+    padding: 16px 12px;
+  }
+
+  .menu-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+}
+
+/* 动画 */
+.multi-account-home-optimized > * {
+  animation: fadeInUp 300ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.multi-account-home-optimized > *:nth-child(1) { animation-delay: 0ms; }
+.multi-account-home-optimized > *:nth-child(2) { animation-delay: 50ms; }
+.multi-account-home-optimized > *:nth-child(3) { animation-delay: 100ms; }
+.multi-account-home-optimized > *:nth-child(4) { animation-delay: 150ms; }
+.multi-account-home-optimized > *:nth-child(5) { animation-delay: 200ms; }
+.multi-account-home-optimized > *:nth-child(6) { animation-delay: 250ms; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
