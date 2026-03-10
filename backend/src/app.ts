@@ -15,6 +15,7 @@ import wechatRoutes from './routes/wechat';
 import statsRoutes from './routes/stats';
 import employeeBindingRoutes from './routes/employeeBinding';
 import employeeInfoRoutes from './routes/employeeInfo';
+import initRoutes from './routes/init';
 
 dotenv.config();
 
@@ -56,6 +57,7 @@ app.use('/api/wechat', wechatRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/employee-binding', employeeBindingRoutes);
 app.use('/api/employee-info', employeeInfoRoutes);
+app.use('/api/init', initRoutes);
 
 // 404处理
 app.use((req: Request, res: Response) => {
