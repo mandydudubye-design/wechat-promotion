@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { pool } from '../config/database';
-import { authenticateToken } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import smsService from '../services/smsService';
 
@@ -318,7 +318,7 @@ router.get('/status/:openid', async (req: Request, res: Response) => {
 });
 
 // 解除绑定
-router.delete('/unbind', authenticateToken, async (req: Request, res: Response) => {
+router.delete('/unbind', authenticate, async (req: Request, res: Response) => {
   try {
     const { openid } = req.body;
 
@@ -343,7 +343,7 @@ router.delete('/unbind', authenticateToken, async (req: Request, res: Response) 
 });
 
 // 管理员手动绑定员工
-router.post('/admin/bind', authenticateToken, async (req: Request, res: Response) => {
+router.post('/admin/bind', authenticate, async (req: Request, res: Response) => {
   try {
     const { employee_id, openid, admin_note } = req.body;
 

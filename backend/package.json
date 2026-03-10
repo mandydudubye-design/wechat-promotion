@@ -30,7 +30,10 @@
     "cors": "^2.8.5",
     "dotenv": "^17.3.1",
     "express-validator": "^7.0.1",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "joi": "^17.11.0",
+    "exceljs": "^4.4.0",
+    "winston": "^3.11.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
