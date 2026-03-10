@@ -2,7 +2,15 @@ import { Router, Request, Response } from 'express';
 import { pool } from '../config/database';
 import { logger } from '../utils/logger';
 import { ApiError } from '../middleware/errorHandler';
+import { WechatService } from '../services/wechat';
 import crypto from 'crypto';
+import axios from 'axios';
+
+// 初始化微信服务
+const wechatService = new WechatService(
+  process.env.WECHAT_APP_ID || '',
+  process.env.WECHAT_APP_SECRET || ''
+);
 
 const router = Router();
 
@@ -169,7 +177,7 @@ async function handleScanFollow(connection: any, openid: string, sceneStr: strin
     const promotion = (promoList as any)[0];
 
     // 1. 获取用户信息
-    const userInfo = await getUserInfo(openid);
+    const userInfo = await wechatService.getUserInfo(openid);
     
     // 2. 检查是否已有关注记录
     const [existing] = await connection.query(
@@ -242,7 +250,7 @@ async function handleScanFollow(connection: any, openid: string, sceneStr: strin
 async function handleNormalFollow(connection: any, openid: string) {
   try {
     // 1. 获取用户信息
-    const userInfo = await getUserInfo(openid);
+    const userInfo = await wechatService.getUserInfo(openid);
     
     // 2. 检查是否已有关注记录
     const [existing] = await connection.query(
@@ -365,7 +373,7 @@ async function handleScan(connection: any, openid: string, eventKey: string) {
 // 创建员工登记菜单
 router.post('/create-employee-menu', async (req: Request, res: Response) => {
   try {
-    const accessToken = await getAccessToken();
+    const accessToken = await wechatService.getAccessToken();
     
     const menu = {
       button: [
