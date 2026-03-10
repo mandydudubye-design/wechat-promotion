@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "npm start",
+    "startCommand": "npm install && npm start",
     "healthcheckPath": "/health"
   }
 }
