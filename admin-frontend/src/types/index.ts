@@ -1,3 +1,11 @@
+// 单个公众号关注状态
+export interface AccountFollowStatus {
+  accountId: string
+  accountName: string
+  isFollowed: boolean
+  followTime?: string
+}
+
 export interface Employee {
   id: string
   employeeNo: string
@@ -9,12 +17,14 @@ export interface Employee {
   openid?: string
   bindStatus: 0 | 1 | 2 // 0-未绑定 1-已绑定 2-已禁用
   bindTime?: string
-  followStatus: 0 | 1 // 0-未关注 1-已关注
+  followStatus: 0 | 1 // 0-未关注 1-已关注 (兼容旧数据)
   followTime?: string
   qrCodeUrl?: string
   sceneId?: string
   promotionCount: number
   createdAt: string
+  // 新增：多公众号关注状态
+  followStatuses?: AccountFollowStatus[]
 }
 
 export interface PromotionRecord {

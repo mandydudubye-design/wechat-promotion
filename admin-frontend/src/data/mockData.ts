@@ -18,6 +18,12 @@ export const mockEmployees: Employee[] = [
     sceneId: 'scene_001',
     promotionCount: 15,
     createdAt: '2026-02-20 09:00:00',
+    // 多公众号关注状态
+    followStatuses: [
+      { accountId: 'acc001', accountName: '主公众号', isFollowed: true, followTime: '2026-03-01 10:35:00' },
+      { accountId: 'acc002', accountName: '推广号1', isFollowed: true, followTime: '2026-03-02 14:20:00' },
+      { accountId: 'acc003', accountName: '推广号2', isFollowed: false },
+    ],
   },
   {
     id: '2',
@@ -36,6 +42,12 @@ export const mockEmployees: Employee[] = [
     sceneId: 'scene_002',
     promotionCount: 28,
     createdAt: '2026-02-20 09:00:00',
+    // 多公众号关注状态 - 全部已关注
+    followStatuses: [
+      { accountId: 'acc001', accountName: '主公众号', isFollowed: true, followTime: '2026-03-01 14:25:00' },
+      { accountId: 'acc002', accountName: '推广号1', isFollowed: true, followTime: '2026-03-02 09:10:00' },
+      { accountId: 'acc003', accountName: '推广号2', isFollowed: true, followTime: '2026-03-03 16:45:00' },
+    ],
   },
   {
     id: '3',
@@ -54,6 +66,12 @@ export const mockEmployees: Employee[] = [
     sceneId: 'scene_003',
     promotionCount: 12,
     createdAt: '2026-02-20 09:00:00',
+    // 多公众号关注状态 - 只关注了主公众号
+    followStatuses: [
+      { accountId: 'acc001', accountName: '主公众号', isFollowed: true, followTime: '2026-03-02 09:20:00' },
+      { accountId: 'acc002', accountName: '推广号1', isFollowed: false },
+      { accountId: 'acc003', accountName: '推广号2', isFollowed: false },
+    ],
   },
   {
     id: '4',
@@ -71,6 +89,12 @@ export const mockEmployees: Employee[] = [
     promotionCount: 8,
     createdAt: '2026-02-20 09:00:00',
     followStatus: 1,
+    // 多公众号关注状态 - 关注了2个
+    followStatuses: [
+      { accountId: 'acc001', accountName: '主公众号', isFollowed: true, followTime: '2026-03-02 16:50:00' },
+      { accountId: 'acc002', accountName: '推广号1', isFollowed: true, followTime: '2026-03-03 10:00:00' },
+      { accountId: 'acc003', accountName: '推广号2', isFollowed: false },
+    ],
   },
   {
     id: '5',
@@ -102,6 +126,12 @@ export const mockEmployees: Employee[] = [
     sceneId: 'scene_006',
     promotionCount: 22,
     createdAt: '2026-02-20 09:00:00',
+    // 多公众号关注状态 - 全部已关注
+    followStatuses: [
+      { accountId: 'acc001', accountName: '主公众号', isFollowed: true, followTime: '2026-03-03 11:05:00' },
+      { accountId: 'acc002', accountName: '推广号1', isFollowed: true, followTime: '2026-03-03 11:10:00' },
+      { accountId: 'acc003', accountName: '推广号2', isFollowed: true, followTime: '2026-03-03 11:15:00' },
+    ],
   },
   {
     id: '7',
@@ -120,6 +150,12 @@ export const mockEmployees: Employee[] = [
     sceneId: 'scene_007',
     promotionCount: 35,
     createdAt: '2026-02-20 09:00:00',
+    // 多公众号关注状态 - 关注了2个
+    followStatuses: [
+      { accountId: 'acc001', accountName: '主公众号', isFollowed: true, followTime: '2026-03-03 15:35:00' },
+      { accountId: 'acc002', accountName: '推广号1', isFollowed: false },
+      { accountId: 'acc003', accountName: '推广号2', isFollowed: true, followTime: '2026-03-04 09:00:00' },
+    ],
   },
   {
     id: '8',
