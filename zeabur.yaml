@@ -1,0 +1,13 @@
+services:
+  # 后端服务
+  - name: backend
+    type: web
+    build:
+      context: ./backend
+      dockerfile: ./backend/Dockerfile
+    env:
+      NODE_ENV: production
+      PORT: 3000
+    healthCheck:
+      path: /health
+      interval: 30s

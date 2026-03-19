@@ -417,3 +417,8 @@ router.post('/create-employee-menu', async (req: Request, res: Response) => {
 
 export default router;
 
+// 导出获取微信服务的函数
+export function getWechatService(appId: string, appSecret: string): WechatService {
+  return new WechatService(appId, appSecret);
+}
+

@@ -1,4 +1,54 @@
-import type { Employee, PromotionRecord, PromotionStatistics, FollowRecord, DashboardStats, TrendData } from '../types'
+import type { Employee, PromotionRecord, PromotionStatistics, FollowRecord, DashboardStats, TrendData, OfficialAccount, EmployeeFollowStats, PromotionStats } from '../types'
+
+// 公众号数据
+export const mockOfficialAccounts: OfficialAccount[] = [
+  {
+    id: '1',
+    name: '企业官方号',
+    appId: 'wx1234567890abcdef',
+    totalFollowers: 12580,
+    employeeFollowers: 56,
+    todayNewFollows: 85,
+    monthNewFollows: 1250,
+    status: 1,
+  },
+  {
+    id: '2',
+    name: '产品服务号',
+    appId: 'wxabcdef1234567890',
+    totalFollowers: 8920,
+    employeeFollowers: 32,
+    todayNewFollows: 42,
+    monthNewFollows: 680,
+    status: 1,
+  },
+  {
+    id: '3',
+    name: '招聘订阅号',
+    appId: 'wx1111222233334444',
+    totalFollowers: 5600,
+    employeeFollowers: 28,
+    todayNewFollows: 18,
+    monthNewFollows: 320,
+    status: 1,
+  },
+]
+
+// 员工关注公众号统计
+export const mockEmployeeFollowStats: EmployeeFollowStats = {
+  totalEmployees: 65, // 总员工数
+  allAccountsFollowed: 18, // 关注了全部3个公众号
+  partialAccountsFollowed: 35, // 关注了部分公众号（1-2个）
+  noAccountFollowed: 12, // 未关注任何公众号
+}
+
+// 推广任务统计
+export const mockPromotionStats: PromotionStats = {
+  participatingEmployees: 28, // 参与推广的员工数
+  totalPromotedFollows: 425, // 推广带来的关注数
+  employeesWithPromotion: 15, // 有带来推广关注的员工数
+  avgPromotionPerEmployee: 15.2, // 人均推广数
+}
 
 export const mockEmployees: Employee[] = [
   {

@@ -56,7 +56,8 @@ export interface ApiResponse<T = any> {
 export interface BindRequest {
   employeeId: string;
   name: string;
-  phone?: string;
+  department: string;
+  phone: string;
 }
 
 // 用户信息

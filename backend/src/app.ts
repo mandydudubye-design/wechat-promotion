@@ -1,6 +1,7 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import { testConnection } from './config/database';
 import { logger } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
@@ -59,14 +60,26 @@ app.use('/api/employee-binding', employeeBindingRoutes);
 app.use('/api/employee-info', employeeInfoRoutes);
 app.use('/api/init', initRoutes);
 
-// 404处理
-app.use((req: Request, res: Response) => {
-  res.status(404).json({
-    code: 404,
-    message: 'API not found',
-    timestamp: Date.now()
-  });
+// 静态文件服务（前端）
+const publicPath = path.join(__dirname, 'public');
+app.use(express.static(publicPath));
+
+// SPA 路由支持（所有非 API 请求返回 index.html）
+app.get('*', (req: Request, res: Response) => {
+  // 如果是 API 请求，返回 404
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({
+      code: 404,
+      message: 'API not found',
+      timestamp: Date.now()
+    });
+  }
+  
+  // 其他请求返回前端 index.html
+  res.sendFile(path.join(publicPath, 'index.html'));
 });
+
+// 删除重复的 404 处理（已在上面处理）
 
 // 错误处理
 app.use(errorHandler);
@@ -74,13 +87,16 @@ app.use(errorHandler);
 // 启动服务器
 const startServer = async () => {
   try {
-    // 测试数据库连接
-    await testConnection();
+    // 测试数据库连接（但不阻塞启动）
+    testConnection().catch(err => {
+      logger.warn('数据库连接失败，部分功能可能不可用');
+    });
     
     app.listen(PORT, () => {
       logger.info(`🚀 Server is running on port ${PORT}`);
       logger.info(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`🌐 Health check: http://localhost:${PORT}/health`);
+      logger.info(`📦 Static files served from: ${publicPath}`);
     });
   } catch (error) {
     logger.error('Failed to start server:', error);

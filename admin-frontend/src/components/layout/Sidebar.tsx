@@ -2,7 +2,6 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard,
   Users,
-  Eye,
   TrendingUp,
   BarChart3,
   Settings,
@@ -17,8 +16,7 @@ const navItems = [
   { path: '/', icon: LayoutDashboard, label: '概览' },
   { path: '/accounts', icon: MessageSquare, label: '公众号管理' },
   { path: '/employees', icon: Users, label: '员工管理' },
-  { path: '/follow-status', icon: Eye, label: '关注状态' },
-  { path: '/promotion', icon: TrendingUp, label: '推广管理' },
+  { path: '/promotion', icon: TrendingUp, label: '推广统计' },
   { path: '/reports', icon: BarChart3, label: '数据报表' },
   { path: '/settings', icon: Settings, label: '系统设置' },
 ]

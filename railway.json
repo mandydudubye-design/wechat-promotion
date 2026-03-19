@@ -1,10 +1,15 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "builder": "NIXPACKS"
+    "builder": "NIXPACKS",
+    "buildCommand": "cd backend && npm install && cd ../frontend && npm install && npm run build && xcopy /E /I /Y dist ..\\backend\\public && cd ../backend && npm run build",
+    "watchPatterns": [
+      "backend/src/**",
+      "frontend/src/**"
+    ]
   },
   "deploy": {
-    "startCommand": "npm install && cd backend && npm install && npm run build && cd .. && npm start",
-    "healthcheckPath": "/health"
+    "healthcheckPath": "/health",
+    "startCommand": "cd backend && npm start"
   }
 }

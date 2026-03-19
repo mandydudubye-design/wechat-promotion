@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserOutlined, PhoneOutlined, LockOutlined } from '@ant-design/icons';
+import { UserOutlined, PhoneOutlined, LockOutlined, TeamOutlined } from '@ant-design/icons';
 import { mockAllEmployees } from '../utils/mockData';
 import { setLocalStorage } from '../utils/helpers';
 import type { BindRequest } from '../types';
@@ -11,6 +11,7 @@ const BindPage = () => {
   const [formData, setFormData] = useState<BindRequest>({
     employeeId: '',
     name: '',
+    department: '',
     phone: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof BindRequest, string>>>({});
@@ -27,7 +28,11 @@ const BindPage = () => {
       newErrors.name = '请输入姓名';
     }
 
-    if (!formData.phone?.trim()) {
+    if (!formData.department.trim()) {
+      newErrors.department = '请输入部门';
+    }
+
+    if (!formData.phone.trim()) {
       newErrors.phone = '请输入手机号';
     } else if (!/^1[3-9]\d{9}$/.test(formData.phone)) {
       newErrors.phone = '请输入正确的手机号';
@@ -53,6 +58,7 @@ const BindPage = () => {
     const employee = mockAllEmployees.find(
       emp => emp.employeeId === formData.employeeId &&
              emp.name === formData.name &&
+             emp.department === formData.department &&
              emp.phone === formData.phone
     );
 
@@ -65,9 +71,7 @@ const BindPage = () => {
       navigate('/');
     } else {
       setErrors({
-        employeeId: '工号、姓名或手机号不正确',
-        name: '工号、姓名或手机号不正确',
-        phone: '工号、姓名或手机号不正确',
+        employeeId: '员工信息不正确，请检查后重试',
       });
     }
 
@@ -89,7 +93,7 @@ const BindPage = () => {
           <LockOutlined />
         </div>
         <h1 className="bind-title">员工账号绑定</h1>
-        <p className="bind-subtitle">请输入您的工号、姓名和手机号进行验证</p>
+        <p className="bind-subtitle">请输入您的工号、姓名、部门和手机号进行验证</p>
       </div>
 
       <form className="bind-form" onSubmit={handleSubmit}>
@@ -121,6 +125,21 @@ const BindPage = () => {
             disabled={loading}
           />
           {errors.name && <span className="form-error">{errors.name}</span>}
+        </div>
+
+        <div className={`form-item ${errors.department ? 'form-item-error' : ''}`}>
+          <label className="form-label">
+            <TeamOutlined /> 部门
+          </label>
+          <input
+            type="text"
+            className="form-input"
+            placeholder="请输入部门"
+            value={formData.department}
+            onChange={(e) => handleInputChange('department', e.target.value)}
+            disabled={loading}
+          />
+          {errors.department && <span className="form-error">{errors.department}</span>}
         </div>
 
         <div className={`form-item ${errors.phone ? 'form-item-error' : ''}`}>

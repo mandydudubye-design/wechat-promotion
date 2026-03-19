@@ -4,7 +4,7 @@
  */
 
 import Dysmsapi from '@alicloud/dysmsapi20170525';
-import * as $OpenApi from '@alicloud/openapi-client';
+import OpenApiModule = require('@alicloud/openapi-client');
 import { logger } from '../utils/logger';
 
 interface SendSmsOptions {
@@ -23,12 +23,13 @@ export class SmsService {
       logger.warn('阿里云短信配置未找到，短信功能将不可用');
     }
 
-    const config = new $OpenApi.Config({
+    // @ts-ignore
+    const config = new OpenApiModule.default({
       accessKeyId: process.env.ALIYUN_ACCESS_KEY_ID,
       accessKeySecret: process.env.ALIYUN_ACCESS_KEY_SECRET,
+      endpoint: 'dysmsapi.aliyuncs.com',
     });
-    config.endpoint = 'dysmsapi.aliyuncs.com';
-    this.client = new Dysmsapi(config);
+    this.client = new Dysmsapi(config as any);
     
     this.signName = process.env.ALIYUN_SMS_SIGN_NAME || '你的签名';
     this.templateCode = process.env.ALIYUN_SMS_TEMPLATE_CODE || 'SMS_123456789';

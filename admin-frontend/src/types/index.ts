@@ -50,6 +50,32 @@ export interface FollowRecord {
   eventTime: string
 }
 
+export interface OfficialAccount {
+  id: string
+  name: string
+  avatar?: string
+  appId: string
+  totalFollowers: number
+  employeeFollowers: number // 员工关注数
+  todayNewFollows: number
+  monthNewFollows: number
+  status: 0 | 1 // 0-已停用 1-正常
+}
+
+export interface EmployeeFollowStats {
+  totalEmployees: number
+  allAccountsFollowed: number // 关注了全部公众号的员工数
+  partialAccountsFollowed: number // 关注了部分公众号的员工数
+  noAccountFollowed: number // 未关注任何公众号的员工数
+}
+
+export interface PromotionStats {
+  participatingEmployees: number // 参与推广的员工数
+  totalPromotedFollows: number // 推广带来的关注数
+  employeesWithPromotion: number // 有带来推广关注的员工数
+  avgPromotionPerEmployee: number // 人均推广数
+}
+
 export interface DashboardStats {
   totalEmployees: number
   boundEmployees: number
@@ -63,4 +89,5 @@ export interface TrendData {
   subscribe: number
   unsubscribe: number
   net: number
+  accountId?: string // 支持按公众号筛选
 }
