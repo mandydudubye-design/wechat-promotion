@@ -11,7 +11,7 @@ import { TrendingUp, Users, Scan, UserCheck, UserX, ArrowUpRight, BarChart3, Mes
 import { departments } from '../../data/mockData'
 
 // API基础路径
-const API_BASE = 'http://localhost:3001/api'
+const API_BASE = 'http://localhost:11827/api'
 
 // 公众号类型
 interface WechatAccount {

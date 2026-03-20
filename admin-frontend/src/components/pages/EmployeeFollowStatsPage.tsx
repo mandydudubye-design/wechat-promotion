@@ -11,7 +11,7 @@ import { MessageCircle, Users, CheckCircle, XCircle, PieChart as PieChartIcon, B
 import { mockEmployees, departments } from '../../data/mockData'
 import type { Employee } from '../../types'
 
-const API_BASE = 'http://localhost:3001/api'
+const API_BASE = 'http://localhost:11827/api'
 
 // 公众号颜色
 const ACCOUNT_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']

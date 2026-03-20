@@ -1,5 +1,5 @@
 // API配置
-export const API_BASE = 'http://localhost:3001/api'
+export const API_BASE = 'http://localhost:11827/api'
 
 // 获取认证头
 export const getAuthHeaders = () => {

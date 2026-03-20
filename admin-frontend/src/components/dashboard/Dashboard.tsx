@@ -49,9 +49,9 @@ export function Dashboard() {
 
         // 并行获取数据
         const [employeesRes, accountsRes, statsRes] = await Promise.all([
-          fetch('http://localhost:3001/api/employees', { headers }).then(r => r.json()),
-          fetch('http://localhost:3001/api/wechat-accounts', { headers }).then(r => r.json()),
-          fetch('http://localhost:3001/api/stats/overview', { headers }).then(r => r.json())
+          fetch('http://localhost:11827/api/employees', { headers }).then(r => r.json()),
+          fetch('http://localhost:11827/api/wechat-accounts', { headers }).then(r => r.json()),
+          fetch('http://localhost:11827/api/stats/overview', { headers }).then(r => r.json())
         ])
 
         if (employeesRes.code === 200) {

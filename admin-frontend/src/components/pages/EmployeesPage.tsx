@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Plus, Search, Upload, Download, QrCode, ChevronDown, ChevronUp, MessageCircle, UserCheck, UserX, Share2, Users, Link2 } from 'lucide-react'
 import type { Employee } from '../../types'
 
-const API_BASE = 'http://localhost:3001/api'
+const API_BASE = 'http://localhost:11827/api'
 
 // 公众号类型
 interface WechatAccount {
