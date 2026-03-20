@@ -1,154 +1,176 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeftOutlined, UserOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
 import './HelpPage.css';
+
+interface FAQItem {
+  question: string;
+  answer: string;
+}
 
 const HelpPage = () => {
   const navigate = useNavigate();
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
-  const faqs = [
+  const faqList: FAQItem[] = [
     {
-      question: '什么是推广码？',
-      answer: '推广码是您的专属二维码，其他用户扫描您的推广码关注公众号后，系统会自动记录为您的推广成果。',
+      question: '如何获取推广码？',
+      answer: '绑定账号后，系统会自动生成您的专属推广码。在首页点击"推广码"标签即可查看和保存您的推广码图片。',
     },
     {
-      question: '如何分享推广码？',
-      answer: '在"我的推广码"页面，您可以点击"复制推广文案"按钮，将推广文案复制到剪贴板，然后通过微信、短信等方式分享给朋友。也可以点击"保存二维码"将图片保存到相册。',
+      question: '推广码如何使用？',
+      answer: '将推广码分享给客户，客户扫码后会自动关联到您的账号。客户关注公众号后，系统会记录您的推广业绩。',
     },
     {
-      question: '推广数据如何统计？',
-      answer: '系统会自动统计所有扫描您推广码的用户数量，以及其中完成关注公众号的用户数量。数据每小时更新一次。',
+      question: '如何查看推广数据？',
+      answer: '在首页可以看到今日和累计的扫码数、关注数等数据。点击"推广记录"可以查看详细的推广记录列表。',
     },
     {
       question: '排行榜是如何计算的？',
-      answer: '排行榜按照推广效果进行排名，今日排行显示当天的推广数据，本月排行显示本月的累计数据。',
+      answer: '排行榜根据关注数进行排名，关注数相同的情况下按扫码数排名。可以选择查看今日、本周、本月或累计排行。',
     },
     {
-      question: '为什么有些扫码记录没有关注？',
-      answer: '有些用户可能只是扫码查看了公众号信息，但未完成关注操作。这类记录会显示为"未关注"状态。',
+      question: '为什么扫码后没有记录？',
+      answer: '可能的原因：1) 客户之前已经扫过其他人的推广码；2) 客户未完成关注流程；3) 系统数据同步有延迟，请稍后刷新查看。',
     },
     {
-      question: '如何提高推广转化率？',
-      answer: '建议您：1）向朋友介绍公众号的价值和内容；2）分享公众号的优质文章；3）解答朋友关于公众号的疑问；4）定期提醒已经扫码的朋友完成关注。',
+      question: '如何修改个人信息？',
+      answer: '目前个人信息不支持自行修改。如需修改，请联系管理员进行处理。',
     },
     {
-      question: '绑定账号后可以更换吗？',
-      answer: '账号绑定后不支持更换，每个员工只能绑定一个微信账号。如需帮助，请联系管理员。',
+      question: '忘记工号怎么办？',
+      answer: '请联系您所在部门的管理员或人事部门查询工号信息。',
     },
     {
-      question: '数据有延迟吗？',
-      answer: '推广数据会有5-10分钟的延迟，排行榜数据每小时更新一次。请耐心等待数据更新。',
+      question: '推广奖励如何发放？',
+      answer: '推广奖励按照公司规定的规则进行统计和发放，具体政策请咨询您的部门主管或人力资源部门。',
     },
   ];
 
-  const contactInfo = [
-    {
-      icon: <UserOutlined />,
-      title: '技术支持',
-      content: '如有技术问题，请联系 IT 部门',
-    },
-    {
-      icon: <PhoneOutlined />,
-      title: '业务咨询',
-      content: '如有业务问题，请联系市场部',
-    },
-    {
-      icon: <MailOutlined />,
-      title: '管理员',
-      content: '如需账号帮助，请联系行政部',
-    },
-  ];
+  const handleToggle = (index: number) => {
+    setExpandedIndex(expandedIndex === index ? null : index);
+  };
 
   return (
     <div className="help-page">
-      {/* 导航栏 */}
+      {/* 顶部导航 */}
       <div className="navbar">
-        <div className="navbar-back" onClick={() => navigate(-1)}>
-          <ArrowLeftOutlined />
+        <div className="navbar-left" onClick={() => navigate(-1)}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
         </div>
-        <div className="navbar-title">帮助说明</div>
-        <div className="navbar-action"></div>
+        <div className="navbar-title">帮助中心</div>
+        <div className="navbar-right"></div>
       </div>
 
-      {/* 欢迎卡片 */}
-      <div className="welcome-card">
-        <div className="welcome-icon">👋</div>
-        <h2 className="welcome-title">欢迎使用推广系统</h2>
-        <p className="welcome-text">
-          这里是公众号推广追踪系统的帮助中心，您可以找到常见问题的解答和使用指南。
-        </p>
-      </div>
+      {/* 快捷入口 */}
+      <div className="quick-actions">
+        <h3 className="section-title">快捷操作</h3>
+        <div className="action-grid">
+          <div className="action-item" onClick={() => navigate('/')}>
+            <div className="action-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+            </div>
+            <span className="action-label">我的推广码</span>
+          </div>
 
-      {/* 快速入门 */}
-      <div className="section">
-        <h3 className="section-title">快速入门</h3>
-        <div className="steps-card">
-          <div className="step-item">
-            <div className="step-number">1</div>
-            <div className="step-content">
-              <div className="step-title">绑定账号</div>
-              <div className="step-description">使用工号、姓名和手机号完成账号绑定</div>
+          <div className="action-item" onClick={() => navigate('/records')}>
+            <div className="action-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
             </div>
+            <span className="action-label">推广记录</span>
           </div>
-          <div className="step-item">
-            <div className="step-number">2</div>
-            <div className="step-content">
-              <div className="step-title">获取推广码</div>
-              <div className="step-description">在首页查看您的专属推广二维码</div>
+
+          <div className="action-item" onClick={() => navigate('/ranking')}>
+            <div className="action-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="20" x2="18" y2="10"></line>
+                <line x1="12" y1="20" x2="12" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="14"></line>
+              </svg>
             </div>
+            <span className="action-label">排行榜</span>
           </div>
-          <div className="step-item">
-            <div className="step-number">3</div>
-            <div className="step-content">
-              <div className="step-title">分享推广</div>
-              <div className="step-description">通过微信等方式分享推广码给朋友</div>
+
+          <div className="action-item" onClick={() => navigate('/profile')}>
+            <div className="action-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
             </div>
-          </div>
-          <div className="step-item">
-            <div className="step-number">4</div>
-            <div className="step-content">
-              <div className="step-title">查看数据</div>
-              <div className="step-description">实时查看推广数据和排行榜</div>
-            </div>
+            <span className="action-label">个人中心</span>
           </div>
         </div>
       </div>
 
       {/* 常见问题 */}
-      <div className="section">
+      <div className="faq-section">
         <h3 className="section-title">常见问题</h3>
         <div className="faq-list">
-          {faqs.map((faq, index) => (
-            <div key={index} className="faq-item">
+          {faqList.map((item, index) => (
+            <div 
+              key={index} 
+              className={`faq-item ${expandedIndex === index ? 'expanded' : ''}`}
+              onClick={() => handleToggle(index)}
+            >
               <div className="faq-question">
-                <span className="faq-icon">❓</span>
-                <span className="faq-question-text">{faq.question}</span>
+                <span className="faq-icon">Q</span>
+                <span className="faq-text">{item.question}</span>
+                <svg 
+                  className="faq-arrow" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
               </div>
-              <div className="faq-answer">{faq.answer}</div>
+              {expandedIndex === index && (
+                <div className="faq-answer">
+                  <span className="faq-icon answer">A</span>
+                  <span className="faq-text">{item.answer}</span>
+                </div>
+              )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* 联系我们 */}
-      <div className="section">
-        <h3 className="section-title">联系我们</h3>
-        <div className="contact-list">
-          {contactInfo.map((item, index) => (
-            <div key={index} className="contact-item">
-              <div className="contact-icon-wrapper">{item.icon}</div>
-              <div className="contact-content">
-                <div className="contact-title">{item.title}</div>
-                <div className="contact-text">{item.content}</div>
-              </div>
-            </div>
-          ))}
+      {/* 联系支持 */}
+      <div className="support-section">
+        <h3 className="section-title">需要更多帮助？</h3>
+        <div className="support-card">
+          <div className="support-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+          </div>
+          <div className="support-info">
+            <div className="support-title">联系管理员</div>
+            <div className="support-desc">工作时间：周一至周五 9:00-18:00</div>
+          </div>
+          <a href="tel:400-123-4567" className="support-action">
+            拨打电话
+          </a>
         </div>
       </div>
 
       {/* 底部提示 */}
-      <div className="footer-tip">
-        <p>感谢您的使用和支持！</p>
-        <p>让我们一起为组织发展贡献力量</p>
+      <div className="help-footer">
+        <p>如有其他问题，请联系部门管理员</p>
       </div>
     </div>
   );

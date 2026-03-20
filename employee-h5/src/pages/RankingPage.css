@@ -1,13 +1,27 @@
+/* 排行榜页面样式 - 现代设计 */
 .ranking-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding-bottom: 30px;
+  background: #f5f7fa;
+  padding-bottom: 100px;
+  position: relative;
 }
 
+.ranking-page::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30vh;
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  z-index: -1;
+}
+
+/* 顶部导航 */
 .navbar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: transparent;
   color: white;
-  padding: 12px 16px;
+  padding: 16px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -16,239 +30,492 @@
   z-index: 100;
 }
 
-.navbar-back {
-  font-size: 20px;
-  cursor: pointer;
+.navbar-left,
+.navbar-right {
   width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.navbar-left:active {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.navbar-left svg {
+  width: 22px;
+  height: 22px;
 }
 
 .navbar-title {
   flex: 1;
   text-align: center;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.navbar-action {
-  width: 40px;
-}
-
-.tabs {
+/* 时间筛选 */
+.filter-tabs {
   display: flex;
-  background: white;
-  border-bottom: 1px solid #f0f0f0;
-  position: sticky;
-  top: 48px;
-  z-index: 99;
+  gap: 10px;
+  padding: 16px;
+  background: transparent;
 }
 
-.tab-item {
+.filter-tab {
   flex: 1;
-  text-align: center;
-  padding: 14px 0;
-  font-size: 15px;
-  color: #666;
+  height: 44px;
+  border: none;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  position: relative;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.25);
+  color: #c8d6ff;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.tab-item.active {
+.filter-tab.active {
+  background: #fff;
   color: #667eea;
-  font-weight: 500;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
-.tab-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 2px;
-  background: #667eea;
+.filter-tab:not(.active):active {
+  background: rgba(255, 255, 255, 0.3);
 }
 
+/* 我的排名卡片 - 现代设计 */
 .my-ranking-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  margin: 16px;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  background: #fff;
+  color: #1a1a2e;
+  margin: 0 16px 20px;
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 }
 
 .my-ranking-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .my-ranking-label {
   font-size: 14px;
-  opacity: 0.9;
+  color: #999;
+  font-weight: 500;
 }
 
-.my-ranking-rank {
-  font-size: 18px;
-  font-weight: bold;
+.my-ranking-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .my-ranking-stats {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 0;
+  align-items: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  border-radius: 16px;
 }
 
-.my-ranking-stat {
+.my-stat {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
 }
 
-.my-ranking-stat .stat-value {
+.my-stat.highlight .my-stat-value {
+  color: #667eea;
+}
+
+.my-stat-value {
   font-size: 28px;
-  font-weight: bold;
+  font-weight: 800;
+  color: #1a1a2e;
 }
 
-.my-ranking-stat .stat-label {
-  font-size: 13px;
-  opacity: 0.9;
+.my-stat-label {
+  font-size: 12px;
+  color: #999;
+  font-weight: 500;
 }
 
-.ranking-list {
-  margin: 0 16px;
+.my-stat-divider {
+  width: 1px;
+  height: 36px;
+  background: rgba(102, 126, 234, 0.2);
 }
 
-.ranking-item {
-  background: white;
-  padding: 16px;
+/* 前三名展示 - 现代设计 */
+.top-three-section {
+  margin: 0 16px 20px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 14px;
+  padding-left: 4px;
+}
+
+.top-three-podium {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.podium-item {
+  background: #fff;
+  border-radius: 20px;
+  padding: 18px 10px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  border-bottom: 1px solid #f0f0f0;
-  transition: all 0.3s;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
 }
 
-.ranking-item:first-child {
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
+.podium-item.first {
+  padding-top: 28px;
 }
 
-.ranking-item:last-child {
-  border-bottom: none;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
+.podium-item.is-me {
+  border: 2px solid #667eea;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
 }
 
-.ranking-item.is-me {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  border-left: 3px solid #667eea;
+.crown {
+  position: absolute;
+  top: -14px;
+  font-size: 28px;
+  animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.podium-avatar {
+  position: relative;
+  margin-bottom: 10px;
 }
 
 .rank-badge {
-  width: 36px;
-  height: 36px;
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  font-size: 11px;
   font-weight: bold;
+  color: white;
+  z-index: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-.rank-1 {
+.rank-badge.gold {
   background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-  color: white;
 }
 
-.rank-2 {
+.rank-badge.silver {
   background: linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%);
-  color: white;
 }
 
-.rank-3 {
+.rank-badge.bronze {
   background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%);
+}
+
+.avatar-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-}
-
-.rank-other {
-  background: #f5f5f5;
-  color: #999;
-}
-
-.rank-icon {
-  font-size: 18px;
-}
-
-.rank-number {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.ranking-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.ranking-name {
-  font-size: 15px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 4px;
-}
-
-.ranking-dept {
-  font-size: 12px;
-  color: #999;
-}
-
-.ranking-stats {
-  display: flex;
-  gap: 16px;
-  flex-shrink: 0;
-}
-
-.ranking-stat {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
 }
 
-.stat-number {
-  font-size: 18px;
+.podium-item.first .avatar-circle {
+  width: 62px;
+  height: 62px;
+  font-size: 22px;
+}
+
+.podium-name {
+  font-size: 14px;
   font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 3px;
+}
+
+.podium-item.first .podium-name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.podium-dept {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 10px;
+}
+
+.podium-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  border-radius: 12px;
+}
+
+.podium-stat.highlight {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.podium-stat .stat-number {
+  font-size: 18px;
+  font-weight: 700;
   color: #667eea;
 }
 
-.stat-text {
+.podium-stat .stat-text {
   font-size: 11px;
   color: #999;
 }
 
-.ranking-tip {
-  text-align: center;
-  padding: 20px;
+.podium-bar {
+  width: 100%;
+  border-radius: 0 0 16px 16px;
+  margin-top: 10px;
+}
+
+.gold-bar {
+  height: 44px;
+  background: linear-gradient(to top, #FFD700, #FFA500);
+}
+
+.silver-bar {
+  height: 32px;
+  background: linear-gradient(to top, #C0C0C0, #A8A8A8);
+}
+
+.bronze-bar {
+  height: 24px;
+  background: linear-gradient(to top, #CD7F32, #A0522D);
+}
+
+/* 排名列表 - 现代设计 */
+.ranking-list-section {
+  margin: 0 16px 16px;
+  min-height: 400px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
   color: #999;
-  font-size: 12px;
-  line-height: 1.6;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(102, 126, 234, 0.2);
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.ranking-list {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.08);
+  transition: all 0.3s ease;
+}
+
+.ranking-item:last-child {
+  border-bottom: none;
+}
+
+.ranking-item:active {
+  background: linear-gradient(135deg, #f8f9ff 0%, #f5f7ff 100%);
+}
+
+.ranking-item.is-me {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-left: 4px solid #667eea;
+}
+
+.item-rank {
+  width: 32px;
+  text-align: center;
+}
+
+.rank-number {
+  font-size: 16px;
+  font-weight: 700;
+  color: #999;
+}
+
+.item-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 4px;
+}
+
+.me-tag {
+  font-size: 10px;
+  padding: 3px 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.item-dept {
+  font-size: 13px;
+  color: #999;
+}
+
+.item-stats {
+  display: flex;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.item-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ranking-list .item-stat .stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #8b5cf6 !important;
+}
+
+.ranking-list .item-stat.secondary .stat-value {
+  color: #a855f7 !important;
+}
+
+.ranking-list .item-stat .stat-label {
+  font-size: 11px;
+  color: #7c3aed !important;
+  font-weight: 500;
+}
+
+/* 底部提示 */
+.ranking-footer {
+  text-align: center;
+  padding: 30px;
+  color: #999;
+  font-size: 13px;
+  line-height: 1.8;
 }
 
 /* 适配小屏幕 */
 @media screen and (max-width: 375px) {
-  .my-ranking-stats {
-    gap: 16px;
+  .top-three-podium {
+    gap: 8px;
   }
 
-  .my-ranking-stat .stat-value {
-    font-size: 24px;
+  .podium-item {
+    padding: 14px 8px;
   }
 
-  .stat-number {
+  .avatar-circle {
+    width: 40px;
+    height: 40px;
     font-size: 16px;
+  }
+
+  .podium-item.first .avatar-circle {
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
+  }
+
+  .my-stat-value {
+    font-size: 22px;
+  }
+
+  .item-stats {
+    gap: 8px;
+  }
+
+  .item-stat .stat-value {
+    font-size: 14px;
   }
 }

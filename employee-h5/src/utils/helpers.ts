@@ -20,6 +20,18 @@ export const formatDateTime = (dateTime: string): string => {
   });
 };
 
+// 格式化日期
+export const formatDate = (dateTime: string): string => {
+  const date = new Date(dateTime);
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
 // 获取日期范围
 export const getDateRange = (days: number): { start: string; end: string } => {
   const end = new Date();

@@ -1,175 +1,267 @@
+/* 推广记录页面样式 - 现代设计 */
 .records-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding-bottom: 30px;
+  background: #f5f7fa;
+  padding-bottom: 100px;
+  position: relative;
 }
 
+/* 固定高度的紫色背景 */
+.records-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 240px;
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  border-radius: 0 0 0 0;
+  z-index: 0;
+}
+
+/* 顶部导航 */
 .navbar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: transparent;
   color: white;
-  padding: 12px 16px;
+  padding: 16px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  position: relative;
+  z-index: 1;
 }
 
-.navbar-back {
-  font-size: 20px;
-  cursor: pointer;
+.navbar-left,
+.navbar-right {
   width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.navbar-left:active {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.navbar-left svg {
+  width: 22px;
+  height: 22px;
 }
 
 .navbar-title {
   flex: 1;
   text-align: center;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.navbar-action {
-  width: 40px;
+/* 统计概览 - 现代设计 */
+.stats-overview {
+  background: #fff;
+  color: #1a1a2e;
+  margin: 0 16px 20px;
+  border-radius: 20px;
+  padding: 24px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  position: relative;
+  z-index: 1;
+}
+
+.overview-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.overview-item:not(:last-child) {
+  border-right: 1px solid #f0f0f0;
+  padding-right: 16px;
+}
+
+.overview-item.success .overview-value {
+  color: #52c41a;
+}
+
+.overview-item.warning .overview-value {
+  color: #faad14;
+}
+
+.overview-value {
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.overview-label {
+  font-size: 13px;
+  color: #999;
+  font-weight: 500;
+}
+
+.overview-divider {
+  width: 1px;
+  height: 30px;
+  background: #f0f0f0;
+}
+
+/* 统计区域 */
+.stats-section {
+  padding: 0 16px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
 }
 
 .stats-card {
   background: white;
-  margin: 16px;
-  border-radius: 12px;
-  padding: 24px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.stat-item {
-  text-align: center;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.stat-icon {
-  font-size: 24px;
-  color: #667eea;
-}
-
-.stat-icon-success {
-  color: #52c41a;
-}
-
-.stat-icon-warning {
-  color: #fa8c16;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 4px;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: #666;
-  font-weight: 500;
-}
-
-.stat-divider {
-  width: 1px;
-  height: 40px;
-  background: #f0f0f0;
-}
-
-.records-container {
-  margin: 0 16px;
-}
-
-.loading {
-  text-align: center;
-  padding: 60px 20px;
-  color: #999;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #f0f0f0;
-  border-top-color: #667eea;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 16px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.empty {
-  text-align: center;
-  padding: 80px 20px;
-  color: #999;
-}
-
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: 16px;
-}
-
-.empty-text {
-  font-size: 14px;
-}
-
-.records-list {
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.record-item {
-  padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.record-item:last-child {
-  border-bottom: none;
-}
-
-.record-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
   margin-bottom: 12px;
 }
 
-.record-status {
-  flex-shrink: 0;
+.stats-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
+.stats-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
 }
 
-.status-badge.followed {
-  background: #e8f5e9;
+.stats-item {
+  text-align: center;
+}
+
+.stats-item .stats-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 4px;
+}
+
+.stats-item .stats-value.success {
   color: #52c41a;
 }
 
-.status-badge.not-followed {
-  background: #fff7e6;
-  color: #fa8c16;
+.stats-item .stats-label {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 公众号统计列表 */
+.account-stats-list {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.account-stats-item {
+  padding: 16px;
+  border-bottom: 1px solid #f5f5f5;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.account-stats-item:last-child {
+  border-bottom: none;
+}
+
+.account-stats-item:active {
+  background: #f9f9f9;
+}
+
+.account-stats-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.account-stats-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.account-stats-info {
+  flex: 1;
+}
+
+.account-stats-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 4px;
+}
+
+.account-stats-mini {
+  font-size: 13px;
+  color: #999;
+}
+
+.account-stats-rate {
+  font-size: 18px;
+  font-weight: 700;
+  color: #667eea;
+}
+
+/* 明细区域标题 */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.section-count {
+  font-size: 13px;
+  color: #999;
+}
+
+/* 记录卡片中的公众号信息 */
+.record-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.record-account {
+  font-size: 12px;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 
 .record-time {
@@ -177,51 +269,528 @@
   color: #999;
 }
 
-.record-body {
-  padding-left: 0;
+/* 筛选器 - 现代设计 */
+.filters-section {
+  background: white;
+  margin: 0 16px 16px;
+  border-radius: 20px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  height: 88px !important;
+  min-height: 88px !important;
+  max-height: 88px !important;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  height: 28px;
+  min-height: 28px;
+  max-height: 28px;
+}
+
+.filter-group:last-child {
+  margin-bottom: 0;
+}
+
+.filter-label {
+  font-size: 13px;
+  color: #666;
+  flex-shrink: 0;
+  width: 40px;
+  font-weight: 500;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  align-items: center;
+  height: 28px;
+  min-height: 28px;
+  max-height: 28px;
+}
+
+.filter-btn {
+  height: 28px !important;
+  min-height: 28px;
+  max-height: 28px;
+  min-width: 60px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  color: #666;
+  box-sizing: border-box;
+  line-height: 1;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.filter-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.filter-btn.active.success {
+  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+  box-shadow: 0 2px 8px rgba(82, 196, 26, 0.3);
+}
+
+.filter-btn.active.warning {
+  background: linear-gradient(135deg, #fa8c16 0%, #d46b08 100%);
+  box-shadow: 0 2px 8px rgba(250, 140, 22, 0.3);
+}
+
+.filter-btn:not(.active):active {
+  background: #e8ebff;
+}
+
+/* 记录列表 */
+.records-list-section {
+  margin: 0 16px 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.records-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.record-card {
+  background: white;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.record-card:active {
+  transform: scale(0.99);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.record-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.record-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 }
 
 .record-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex: 1;
+  min-width: 0;
 }
 
-.record-nickname,
-.record-follow-time {
+.record-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.record-time {
   font-size: 13px;
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
+  color: #999;
 }
 
-.record-nickname .label,
-.record-follow-time .label {
-  color: #999;
+.record-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 600;
   flex-shrink: 0;
 }
 
-.record-nickname .value,
-.record-follow-time .value {
-  color: #333;
+.record-status svg {
+  width: 14px;
+  height: 14px;
+}
+
+.record-status.followed {
+  background: linear-gradient(135deg, rgba(82, 196, 26, 0.15) 0%, rgba(82, 196, 26, 0.1) 100%);
+  color: #52c41a;
+}
+
+.record-status.unfollowed {
+  background: linear-gradient(135deg, rgba(250, 140, 22, 0.15) 0%, rgba(250, 140, 22, 0.1) 100%);
+  color: #fa8c16;
+}
+
+.record-footer {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(102, 126, 234, 0.15);
+}
+
+.follow-time {
+  font-size: 13px;
+  color: #52c41a;
+  background: linear-gradient(135deg, rgba(82, 196, 26, 0.1) 0%, rgba(82, 196, 26, 0.05) 100%);
+  padding: 6px 12px;
+  border-radius: 8px;
   font-weight: 500;
 }
 
-.records-tip {
+/* 加载更多 */
+.load-more-btn {
+  width: 100%;
+  padding: 16px;
+  background: white;
+  border: 2px dashed rgba(102, 126, 234, 0.3);
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #667eea;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 12px;
+}
+
+.load-more-btn:active {
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  border-color: #667eea;
+}
+
+/* 空状态 */
+.empty-state {
+  background: white;
+  border-radius: 20px;
+  padding: 60px 20px;
   text-align: center;
-  padding: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* 底部提示 */
+.records-footer {
+  text-align: center;
+  padding: 30px;
   color: #999;
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 13px;
+  line-height: 1.8;
 }
 
 /* 适配小屏幕 */
 @media screen and (max-width: 375px) {
-  .stat-value {
-    font-size: 20px;
+  .stats-overview {
+    padding: 18px 12px;
   }
 
-  .record-item {
+  .overview-value {
+    font-size: 28px;
+  }
+
+  .filter-btn {
+    padding: 0 10px;
+    font-size: 12px;
+    height: 30px;
+    min-width: 50px;
+  }
+
+  .record-card {
     padding: 14px;
   }
+
+  .record-avatar {
+    width: 42px;
+    height: 42px;
+    font-size: 16px;
+  }
+}
+
+/* 公众号筛选标签 */
+.account-filter-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  z-index: 1;
+}
+
+.account-filter-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.account-tab {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.account-tab.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.account-tab:not(.active):active {
+  background: #f5f5f5;
+}
+
+/* 公众号区域 */
+.accounts-section {
+  padding: 0 16px;
+  position: relative;
+  z-index: 1;
+}
+
+/* 公众号卡片 */
+.account-card {
+  background: white;
+  border-radius: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.account-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.account-header:active {
+  background: #f9f9f9;
+}
+
+.account-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.account-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.account-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.account-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.account-stats-mini {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #999;
+}
+
+.account-stats-mini .stat-item {
+  display: flex;
+  align-items: center;
+}
+
+.account-stats-mini .stat-value {
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-right: 2px;
+}
+
+.account-stats-mini .stat-item.success .stat-value {
+  color: #52c41a;
+}
+
+.account-stats-mini .stat-divider {
+  color: #e0e0e0;
+}
+
+.account-expand-icon {
+  width: 24px;
+  height: 24px;
+  color: #999;
+}
+
+.account-expand-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* 展开的详细内容 */
+.account-details-expanded {
+  border-top: 1px solid #f0f0f0;
+  padding: 16px;
+}
+
+/* 详细统计网格 */
+.account-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.stat-box {
+  text-align: center;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  border-radius: 12px;
+  padding: 12px 8px;
+}
+
+.stat-box-label {
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.stat-box-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.stat-box-value.success {
+  color: #52c41a;
+}
+
+/* 记录列表标题 */
+.records-list-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 12px;
+}
+
+/* 迷你记录项 */
+.record-item-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.record-item-mini:last-of-type {
+  border-bottom: none;
+}
+
+.record-item-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #e8e8e8 0%, #d0d0d0 100%);
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.record-item-info {
+  flex: 1;
+}
+
+.record-item-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a2e;
+}
+
+.record-item-time {
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.record-item-status {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 10px;
+}
+
+.record-item-status.followed {
+  background: rgba(82, 196, 26, 0.1);
+  color: #52c41a;
+}
+
+.record-item-status.unfollowed {
+  background: rgba(250, 140, 22, 0.1);
+  color: #fa8c16;
+}
+
+/* 更多记录提示 */
+.records-more {
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  padding-top: 8px;
+  margin-top: 8px;
+  border-top: 1px solid #f5f5f5;
+}
+
+/* 统计概览分隔线 */
+.overview-divider {
+  width: 1px;
+  height: 40px;
+  background: #f0f0f0;
 }

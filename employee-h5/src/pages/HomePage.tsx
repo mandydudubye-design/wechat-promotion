@@ -1,16 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogoutOutlined, ShareAltOutlined, DownloadOutlined, TrophyOutlined, FileTextOutlined, UserOutlined, QuestionCircleOutlined, AppstoreOutlined } from '@ant-design/icons';
 import { QRCodeSVG } from 'qrcode.react';
-import { mockCurrentEmployee, mockPromotionStats } from '../utils/mockData';
+import { useToast } from '../components/Toast';
+import ConfirmDialog from '../components/ConfirmDialog';
+import { mockCurrentEmployee, mockPromotionStats, mockOfficialAccounts } from '../utils/mockData';
 import { getLocalStorage, removeLocalStorage, copyToClipboard, downloadImage } from '../utils/helpers';
-import type { Employee, PromotionStats } from '../types';
+import type { Employee, PromotionStats, OfficialAccount } from '../types';
 import './HomePage.css';
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [stats, setStats] = useState<PromotionStats | null>(null);
+  const [primaryAccount, setPrimaryAccount] = useState<OfficialAccount | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<OfficialAccount | null>(null);
+  const [accounts, setAccounts] = useState<OfficialAccount[]>([]);
+  const [showAccountSelector, setShowAccountSelector] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     // 检查是否已绑定
@@ -30,32 +40,51 @@ const HomePage = () => {
 
     // 加载统计数据
     setStats(mockPromotionStats);
+
+    // 加载公众号列表
+    setAccounts(mockOfficialAccounts);
+
+    // 加载主推公众号
+    const primary = mockOfficialAccounts.find(acc => acc.isPrimary);
+    if (primary) {
+      setPrimaryAccount(primary);
+      setSelectedAccount(primary);
+    }
   }, [navigate]);
 
   const handleLogout = () => {
-    if (window.confirm('确定要退出登录吗？')) {
-      removeLocalStorage('employee');
-      removeLocalStorage('isBound');
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
+    removeLocalStorage('employee');
+    removeLocalStorage('isBound');
+    showToast('已退出登录', 'info');
+    setTimeout(() => {
       navigate('/bind');
-    }
+    }, 500);
+    setShowLogoutConfirm(false);
   };
 
   const handleShare = async () => {
-    if (!employee) return;
+    if (!employee || !selectedAccount) return;
 
-    const shareText = `我是${employee.name}，邀请您关注我们的公众号！\n工号：${employee.employeeId}`;
+    setSharing(true);
+    const shareText = `我是${employee.name}，邀请您关注【${selectedAccount.name}】！\n工号：${employee.employeeId}`;
     const success = await copyToClipboard(shareText);
 
+    setSharing(false);
     if (success) {
-      alert('推广文案已复制到剪贴板，可以分享给朋友了！');
+      showToast('推广文案已复制，快去分享吧！', 'success');
     } else {
-      alert('复制失败，请手动复制');
+      showToast('复制失败，请手动复制', 'error');
     }
   };
 
   const handleDownloadQRCode = () => {
-    if (!employee) return;
+    if (!employee || !selectedAccount) return;
 
+    setSaving(true);
     const svgElement = document.getElementById('qrcode');
     if (svgElement) {
       const svgData = new XMLSerializer().serializeToString(svgElement);
@@ -69,7 +98,15 @@ const HomePage = () => {
         ctx?.drawImage(img, 0, 0);
 
         const pngUrl = canvas.toDataURL('image/png');
-        downloadImage(pngUrl, `推广码-${employee.name}.png`);
+        downloadImage(pngUrl, `推广码-${selectedAccount.name}-${employee.name}.png`);
+        
+        setSaving(false);
+        showToast('二维码已保存', 'success');
+      };
+
+      img.onerror = () => {
+        setSaving(false);
+        showToast('保存失败，请重试', 'error');
       };
 
       img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
@@ -85,14 +122,42 @@ const HomePage = () => {
     );
   }
 
+  // 如果没有设置主推公众号，跳转到多号推广页
+  if (!selectedAccount) {
+    return (
+      <div className="home-page">
+        <div className="no-primary-account">
+          <div className="empty-icon">📱</div>
+          <h3>未设置主推公众号</h3>
+          <p>请联系管理员设置主推公众号</p>
+          <button 
+            className="goto-multi-btn"
+            onClick={() => navigate('/multi-account')}
+          >
+            查看所有公众号
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="home-page">
       {/* 顶部导航 */}
       <div className="navbar">
-        <div className="navbar-left"></div>
+        <div className="navbar-left" onClick={() => navigate('/profile')}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </div>
         <div className="navbar-title">我的推广码</div>
         <div className="navbar-right" onClick={handleLogout}>
-          <LogoutOutlined />
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
         </div>
       </div>
 
@@ -100,8 +165,11 @@ const HomePage = () => {
       <div className="stats-container">
         <div className="stats-header">
           <div className="employee-info">
-            <div className="employee-name">{employee.name}</div>
-            <div className="employee-detail">{employee.department} | {employee.employeeId}</div>
+            <div className="employee-avatar">{employee.name.charAt(0)}</div>
+            <div className="employee-details">
+              <div className="employee-name">{employee.name}</div>
+              <div className="employee-detail">{employee.department} | {employee.employeeId}</div>
+            </div>
           </div>
         </div>
 
@@ -110,12 +178,10 @@ const HomePage = () => {
             <div className="stat-value">{stats.scanCount}</div>
             <div className="stat-label">累计扫码</div>
           </div>
-          <div className="stat-divider"></div>
-          <div className="stat-item">
+          <div className="stat-item highlight">
             <div className="stat-value">{stats.followCount}</div>
             <div className="stat-label">累计关注</div>
           </div>
-          <div className="stat-divider"></div>
           <div className="stat-item">
             <div className="stat-value">{(stats.followCount / stats.scanCount * 100).toFixed(1)}%</div>
             <div className="stat-label">转化率</div>
@@ -129,7 +195,7 @@ const HomePage = () => {
           </div>
           <div className="mini-stat">
             <span className="mini-stat-label">今日关注</span>
-            <span className="mini-stat-value">{stats.todayFollowCount}</span>
+            <span className="mini-stat-value highlight">{stats.todayFollowCount}</span>
           </div>
           <div className="mini-stat">
             <span className="mini-stat-label">本月扫码</span>
@@ -144,63 +210,164 @@ const HomePage = () => {
 
       {/* 二维码卡片 */}
       <div className="qrcode-card">
-        <h3 className="card-title">我的专属推广码</h3>
-        <div className="qrcode-wrapper">
-          <div className="qrcode-box">
-            <QRCodeSVG
-              id="qrcode"
-              value={employee.employeeId}
-              size={240}
-              level="H"
-              includeMargin={true}
-              bgColor="#ffffff"
-              fgColor="#000000"
-            />
-          </div>
-          <p className="qrcode-tip">扫描二维码即可关注公众号</p>
+        <div className="card-header">
+          <h3 className="card-title">我的专属推广码</h3>
+          {accounts.length > 1 && (
+            <div className="account-selector-wrapper">
+              <div 
+                className="account-selector"
+                onClick={() => setShowAccountSelector(!showAccountSelector)}
+              >
+                <span className="selected-account">{selectedAccount?.name}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`selector-arrow ${showAccountSelector ? 'rotated' : ''}`}>
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+              {showAccountSelector && (
+                <div className="account-dropdown">
+                  {accounts.map(account => (
+                    <div 
+                      key={account.id}
+                      className={`account-option ${selectedAccount?.id === account.id ? 'active' : ''}`}
+                      onClick={() => {
+                        setSelectedAccount(account);
+                        setShowAccountSelector(false);
+                      }}
+                    >
+                      <span className="account-name">{account.name}</span>
+                      {account.isPrimary && <span className="primary-tag">主推</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+          {accounts.length === 1 && primaryAccount && (
+            <div className="primary-badge">
+              <span className="badge-icon">📌</span>
+              {primaryAccount.name}
+            </div>
+          )}
         </div>
 
-        <div className="action-buttons">
-          <button className="action-btn primary" onClick={handleShare}>
-            <ShareAltOutlined />
-            复制推广文案
-          </button>
-          <button className="action-btn secondary" onClick={handleDownloadQRCode}>
-            <DownloadOutlined />
-            保存二维码
-          </button>
-        </div>
+        {selectedAccount ? (
+          <>
+            <div className="qrcode-wrapper">
+              <div className="qrcode-box">
+                <QRCodeSVG
+                  id="qrcode"
+                  value={`${selectedAccount.id}_${employee?.employeeId}`}
+                  size={200}
+                  level="H"
+                  includeMargin={true}
+                  bgColor="#ffffff"
+                  fgColor="#000000"
+                />
+              </div>
+              <p className="qrcode-tip">扫描二维码即可关注公众号</p>
+              {selectedAccount.description && (
+                <p className="account-desc">{selectedAccount.description}</p>
+              )}
+            </div>
+
+            <div className="action-buttons">
+              <button 
+                className={`action-btn primary ${sharing ? 'loading' : ''}`} 
+                onClick={handleShare}
+                disabled={sharing}
+              >
+                {sharing ? (
+                  <>
+                    <span className="btn-spinner small white"></span>
+                    复制中...
+                  </>
+                ) : (
+                  <>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    复制推广文案
+                  </>
+                )}
+              </button>
+              <button 
+                className={`action-btn secondary ${saving ? 'loading' : ''}`} 
+                onClick={handleDownloadQRCode}
+                disabled={saving}
+              >
+                {saving ? (
+                  <>
+                    <span className="btn-spinner small"></span>
+                    保存中...
+                  </>
+                ) : (
+                  <>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    保存二维码
+                  </>
+                )}
+              </button>
+            </div>
+          </>
+        ) : null}
       </div>
 
       {/* 功能入口 */}
       <div className="menu-grid">
-        <div className="menu-item" onClick={() => navigate('/multi-account')} style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          border: 'none'
-        }}>
-          <AppstoreOutlined className="menu-icon-custom" style={{ color: 'white' }} />
-          <div className="menu-title" style={{ color: 'white' }}>多公众号管理</div>
-          <div className="menu-desc" style={{ color: 'rgba(255,255,255,0.8)' }}>新功能体验</div>
+        <div 
+          className="menu-item featured" 
+          onClick={() => navigate('/follow-task')}
+        >
+          <div className="menu-icon-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <div className="menu-content">
+            <div className="menu-title">
+              公众号关注任务
+              <span className="follow-badge">2</span>
+            </div>
+            <div className="menu-desc">待关注 2 个公众号</div>
+          </div>
         </div>
+
         <div className="menu-item" onClick={() => navigate('/ranking')}>
-          <TrophyOutlined className="menu-icon-custom" />
-          <div className="menu-title">推广榜单</div>
-          <div className="menu-desc">查看排行</div>
+          <div className="menu-icon-wrapper ranking">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+              <path d="M2 17l10 5 10-5"></path>
+              <path d="M2 12l10 5 10-5"></path>
+            </svg>
+          </div>
+          <div className="menu-content">
+            <div className="menu-title">推广榜单</div>
+            <div className="menu-desc">查看排名</div>
+          </div>
         </div>
+
         <div className="menu-item" onClick={() => navigate('/records')}>
-          <FileTextOutlined className="menu-icon-custom" />
-          <div className="menu-title">推广记录</div>
-          <div className="menu-desc">查看明细</div>
-        </div>
-        <div className="menu-item" onClick={() => navigate('/profile')}>
-          <UserOutlined className="menu-icon-custom" />
-          <div className="menu-title">个人中心</div>
-          <div className="menu-desc">我的信息</div>
-        </div>
-        <div className="menu-item" onClick={() => navigate('/help')}>
-          <QuestionCircleOutlined className="menu-icon-custom" />
-          <div className="menu-title">帮助说明</div>
-          <div className="menu-desc">使用指南</div>
+          <div className="menu-icon-wrapper records">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </div>
+          <div className="menu-content">
+            <div className="menu-title">推广记录</div>
+            <div className="menu-desc">查看明细</div>
+          </div>
         </div>
       </div>
 
@@ -209,6 +376,18 @@ const HomePage = () => {
         <p>让更多人关注我们的公众号</p>
         <p>一起为组织发展贡献力量！</p>
       </div>
+
+      {/* 退出确认弹窗 */}
+      <ConfirmDialog
+        visible={showLogoutConfirm}
+        title="退出登录"
+        message="退出后需要重新绑定才能使用，确定要退出吗？"
+        confirmText="退出"
+        cancelText="取消"
+        type="warning"
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogoutConfirm(false)}
+      />
     </div>
   );
 };

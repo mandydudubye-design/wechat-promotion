@@ -1,37 +1,78 @@
+/* 绑定页面样式 */
 .bind-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 40px 20px 20px;
+  background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
+  padding: 60px 20px 30px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+  overflow: hidden;
 }
 
+/* 顶部装饰圆圈 */
+.bind-header-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 300px;
+  pointer-events: none;
+}
+
+.bind-header-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.bind-header-circle:first-child {
+  width: 200px;
+  height: 200px;
+  top: -80px;
+  right: -50px;
+}
+
+.bind-header-circle:last-child {
+  width: 150px;
+  height: 150px;
+  top: 40px;
+  left: -60px;
+}
+
+/* 头部 */
 .bind-header {
   text-align: center;
   color: white;
-  margin-bottom: 40px;
-  margin-top: 40px;
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 1;
 }
 
 .bind-logo {
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   background: white;
-  border-radius: 50%;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
-  color: #667eea;
-  margin: 0 auto 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin: 0 auto 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transform: rotate(-5deg);
+}
+
+.bind-logo svg {
+  width: 36px;
+  height: 36px;
+  color: #07c160;
 }
 
 .bind-title {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: bold;
   margin-bottom: 8px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .bind-subtitle {
@@ -39,21 +80,52 @@
   opacity: 0.9;
 }
 
-.bind-form {
+/* 表单卡片 */
+.bind-form-card {
   width: 100%;
   max-width: 400px;
   background: white;
-  border-radius: 16px;
-  padding: 30px 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
+.form-card-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);
+  padding: 24px 24px 20px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.form-card-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 4px;
+}
+
+.form-card-header p {
+  font-size: 13px;
+  color: #999;
+  margin: 0;
+}
+
+.form-content {
+  padding: 24px;
+}
+
+/* 表单项 */
 .form-item {
   margin-bottom: 20px;
 }
 
-.form-item-error .form-input {
+.form-item.error .form-input {
   border-color: #ff4d4f;
+  background: #fff2f0;
+}
+
+.form-item.error .form-label {
+  color: #ff4d4f;
 }
 
 .form-label {
@@ -63,22 +135,31 @@
   font-size: 14px;
   font-weight: 500;
   color: #333;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.form-label svg {
+  width: 16px;
+  height: 16px;
+  color: #07c160;
 }
 
 .form-input {
   width: 100%;
   height: 48px;
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 12px;
   padding: 0 16px;
   font-size: 16px;
   transition: all 0.3s;
+  background: #fafafa;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #07c160;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(7, 193, 96, 0.1);
 }
 
 .form-input:disabled {
@@ -87,51 +168,92 @@
   cursor: not-allowed;
 }
 
+.form-input::placeholder {
+  color: #bbb;
+}
+
 .form-error {
   display: block;
   color: #ff4d4f;
   font-size: 12px;
-  margin-top: 4px;
+  margin-top: 6px;
+  padding-left: 2px;
 }
 
+/* 提交按钮 */
 .submit-btn {
-  width: 100%;
-  height: 48px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  width: calc(100% - 48px);
+  height: 50px;
+  background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
-  margin-top: 10px;
+  margin: 0 24px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.submit-btn:active {
-  opacity: 0.8;
+.submit-btn:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
-.submit-btn.loading {
-  opacity: 0.6;
+.submit-btn:disabled {
+  opacity: 0.7;
   cursor: not-allowed;
 }
 
+.submit-btn.loading {
+  background: #e8e8e8;
+  color: #999;
+}
+
+/* 按钮加载动画 */
+.btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 底部提示 */
 .bind-tips {
   width: 100%;
   max-width: 400px;
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 20px;
-  margin-top: 30px;
+  margin-top: 24px;
   backdrop-filter: blur(10px);
+  display: flex;
+  gap: 16px;
+}
+
+.tips-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.tips-content {
+  flex: 1;
 }
 
 .tips-title {
   font-size: 14px;
   font-weight: 600;
   color: #333;
-  margin-bottom: 12px;
+  margin: 0 0 8px;
 }
 
 .tips-list {
@@ -144,35 +266,52 @@
   font-size: 13px;
   color: #666;
   line-height: 1.8;
-  padding-left: 16px;
+  padding-left: 14px;
   position: relative;
 }
 
 .tips-list li::before {
-  content: '•';
+  content: '';
   position: absolute;
   left: 0;
-  color: #667eea;
-  font-weight: bold;
+  top: 9px;
+  width: 4px;
+  height: 4px;
+  background: #07c160;
+  border-radius: 50%;
 }
 
 /* 适配小屏幕 */
 @media screen and (max-width: 375px) {
   .bind-page {
-    padding: 30px 16px 20px;
-  }
-
-  .bind-form {
-    padding: 24px 20px;
+    padding: 40px 16px 24px;
   }
 
   .bind-logo {
-    width: 64px;
-    height: 64px;
-    font-size: 32px;
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+  }
+
+  .bind-logo svg {
+    width: 30px;
+    height: 30px;
   }
 
   .bind-title {
-    font-size: 20px;
+    font-size: 22px;
+  }
+
+  .form-card-header {
+    padding: 20px 20px 16px;
+  }
+
+  .form-content {
+    padding: 20px;
+  }
+
+  .submit-btn {
+    width: calc(100% - 40px);
+    margin: 0 20px 20px;
   }
 }
