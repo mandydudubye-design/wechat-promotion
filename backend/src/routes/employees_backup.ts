@@ -1,4 +1,4 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import { pool } from '../config/database';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth';
 import { ApiError } from '../middleware/errorHandler';
@@ -7,7 +7,7 @@ import { exportEmployees } from '../utils/export';
 
 const router = Router();
 
-// 所有路由需要认证
+// 所有路由需要认�?
 router.use(authenticate);
 
 // 获取员工列表
@@ -28,8 +28,8 @@ router.get('/', validate(employeeQuerySchema, 'query'), async (req: AuthRequest,
     let params: any[] = [];
 
     if (keyword) {
-      query += ' AND (name LIKE ? OR phone LIKE ?)';
-      params.push(`%${keyword}%`, `%${keyword}%`);
+      query += ' AND (name LIKE ? OR employee_id LIKE ? OR phone LIKE ?)';
+      params.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
     }
 
     if (department) {
@@ -52,7 +52,7 @@ router.get('/', validate(employeeQuerySchema, 'query'), async (req: AuthRequest,
     const [countResult] = await pool.query(countQuery, params);
     const total = (countResult as any)[0].total;
 
-    // 添加排序和分页
+    // 添加排序和分�?
     query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
     params.push(Number(pageSize), offset);
 
@@ -83,8 +83,8 @@ router.get('/export', async (req: AuthRequest, res, next) => {
     let params: any[] = [];
 
     if (keyword) {
-      query += ' AND (name LIKE ? OR phone LIKE ?)';
-      params.push(`%${keyword}%`, `%${keyword}%`);
+      query += ' AND (name LIKE ? OR employee_id LIKE ? OR phone LIKE ?)';
+      params.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
     }
 
     if (department) {
@@ -118,21 +118,21 @@ router.get('/:employeeId', async (req: AuthRequest, res, next) => {
     const { employeeId } = req.params;
 
     const [rows] = await pool.query(
-      'SELECT * FROM employees WHERE id = ?',
+      'SELECT * FROM employees WHERE employee_id = ?',
       [employeeId]
     );
 
     const employees = rows as any[];
     if (employees.length === 0) {
-      throw new ApiError(404, '员工不存在');
+      throw new ApiError(404, '员工不存�?);
     }
 
-    // 获取员工的推广统计
-    const [promoStats] = await pool.query(
+    // 获取员工的关注统�?
+    const [followStats] = await pool.query(
       `SELECT 
-        COALESCE(SUM(scan_count), 0) as total_scans,
-        COALESCE(SUM(follow_count), 0) as total_follows
-       FROM promotion_records
+        COUNT(*) as total_follows,
+        SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as current_follows
+       FROM follow_records
        WHERE employee_id = ?`,
       [employeeId]
     );
@@ -143,7 +143,7 @@ router.get('/:employeeId', async (req: AuthRequest, res, next) => {
       timestamp: Date.now(),
       data: {
         ...(employees as any[])[0],
-        promo_stats: (promoStats as any[])[0]
+        follow_stats: (followStats as any[])[0]
       }
     });
   } catch (error) {
@@ -154,30 +154,27 @@ router.get('/:employeeId', async (req: AuthRequest, res, next) => {
 // 添加员工
 router.post('/', authorize('admin'), validate(createEmployeeSchema), async (req: AuthRequest, res, next) => {
   try {
-    const { name, phone, department, position } = req.body;
+    const { employee_id, name, phone, department, position } = req.body;
 
-    // 检查手机号是否已存在
-    if (phone) {
-      const [existing] = await pool.query(
-        'SELECT id FROM employees WHERE phone = ?',
-        [phone]
-      );
+    // 检查员工ID是否已存�?
+    const [existing] = await pool.query(
+      'SELECT id FROM employees WHERE employee_id = ?',
+      [employee_id]
+    );
 
-      if ((existing as any[]).length > 0) {
-        throw new ApiError(400, '手机号已存在');
-      }
+    if ((existing as any[]).length > 0) {
+      throw new ApiError(400, '员工ID已存�?);
     }
 
-    const [result] = await pool.query(
-      'INSERT INTO employees (name, phone, department, position) VALUES (?, ?, ?, ?)',
-      [name, phone, department, position]
+    await pool.query(
+      'INSERT INTO employees (employee_id, name, phone, department, position) VALUES (?, ?, ?, ?, ?)',
+      [employee_id, name, phone, department, position]
     );
 
     res.json({
       code: 200,
       message: '添加成功',
-      timestamp: Date.now(),
-      data: { id: (result as any).insertId }
+      timestamp: Date.now()
     });
   } catch (error) {
     next(error);
@@ -218,7 +215,7 @@ router.put('/:employeeId', authorize('admin'), validate(updateEmployeeSchema), a
     params.push(employeeId);
 
     await pool.query(
-      `UPDATE employees SET ${updates.join(', ')} WHERE id = ?`,
+      `UPDATE employees SET ${updates.join(', ')} WHERE employee_id = ?`,
       params
     );
 
@@ -238,7 +235,7 @@ router.put('/:employeeId/disable', authorize('admin'), async (req: AuthRequest, 
     const { employeeId } = req.params;
 
     await pool.query(
-      'UPDATE employees SET bind_status = 2, updated_at = NOW() WHERE id = ?',
+      'UPDATE employees SET bind_status = 2, updated_at = NOW() WHERE employee_id = ?',
       [employeeId]
     );
 
@@ -258,7 +255,7 @@ router.put('/:employeeId/enable', authorize('admin'), async (req: AuthRequest, r
     const { employeeId } = req.params;
 
     await pool.query(
-      'UPDATE employees SET bind_status = 1, updated_at = NOW() WHERE id = ?',
+      'UPDATE employees SET bind_status = 1, updated_at = NOW() WHERE employee_id = ?',
       [employeeId]
     );
 
@@ -277,7 +274,7 @@ router.delete('/:employeeId', authorize('admin'), async (req: AuthRequest, res, 
   try {
     const { employeeId } = req.params;
 
-    await pool.query('DELETE FROM employees WHERE id = ?', [employeeId]);
+    await pool.query('DELETE FROM employees WHERE employee_id = ?', [employeeId]);
 
     res.json({
       code: 200,
@@ -290,3 +287,4 @@ router.delete('/:employeeId', authorize('admin'), async (req: AuthRequest, res, 
 });
 
 export default router;
+

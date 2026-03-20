@@ -11,9 +11,7 @@ export interface Employee {
   employeeNo: string
   name: string
   department: string
-  position?: string
   phone?: string
-  email?: string
   openid?: string
   bindStatus: 0 | 1 | 2 // 0-未绑定 1-已绑定 2-已禁用
   bindTime?: string

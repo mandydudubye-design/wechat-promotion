@@ -8,186 +8,137 @@ const router = Router();
 // 所有路由需要认证
 router.use(authenticate);
 
-// 获取概览统计数据
-router.get('/overview', async (req: AuthRequest, res, next) => {
+// 获取推广统计数据（新版，支持时间范围）
+router.get('/promotion', async (req: AuthRequest, res, next) => {
   try {
-    // 员工统计
-    const [employeeStats] = await pool.query(
+    const { 
+      start_date, 
+      end_date, 
+      department,
+      account_id 
+    } = req.query;
+
+    // 构建时间条件
+    let timeCondition = '1=1';
+    let timeParams: any[] = [];
+    
+    if (start_date && end_date) {
+      timeCondition = 'fr.created_at >= ? AND fr.created_at <= ?';
+      timeParams.push(String(start_date), String(end_date) + ' 23:59:59');
+    } else if (start_date) {
+      timeCondition = 'fr.created_at >= ?';
+      timeParams.push(String(start_date));
+    } else if (end_date) {
+      timeCondition = 'fr.created_at <= ?';
+      timeParams.push(String(end_date) + ' 23:59:59');
+    }
+
+    // 构建部门和公众号条件
+    let extraCondition = '';
+    let extraParams: any[] = [];
+    
+    if (department && department !== 'all') {
+      extraCondition += ' AND e.department = ?';
+      extraParams.push(String(department));
+    }
+    
+    if (account_id && account_id !== 'all') {
+      extraCondition += ' AND fr.wechat_id = ?';
+      extraParams.push(Number(account_id));
+    }
+
+    const whereClause = `WHERE ${timeCondition}${extraCondition}`;
+    const allParams = [...timeParams, ...extraParams];
+
+    // 1. 汇总统计 - 根据promotion_records表
+    const [summaryStats] = await pool.query(
       `SELECT 
-        COUNT(*) as total,
-        SUM(CASE WHEN bind_status = 1 THEN 1 ELSE 0 END) as active,
-        SUM(CASE WHEN bind_status = 0 THEN 1 ELSE 0 END) as inactive,
-        SUM(CASE WHEN bind_status = 2 THEN 1 ELSE 0 END) as disabled
-       FROM employees`
+        COALESCE(SUM(pr.scan_count), 0) as total_scans,
+        COALESCE(SUM(pr.follow_count), 0) as total_follows,
+        COUNT(DISTINCT pr.employee_id) as active_employees
+       FROM promotion_records pr
+       LEFT JOIN employees e ON pr.employee_id = e.id
+       WHERE 1=1${extraCondition.replace('fr.wechat_id', 'pr.wechat_id')}`,
+      extraParams
     );
 
-    // 公众号统计
+    // 2. 按公众号统计
     const [accountStats] = await pool.query(
       `SELECT 
-        COUNT(*) as total,
-        SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as active,
-        SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as inactive
-       FROM wechat_accounts`
+        wa.id,
+        wa.account_name,
+        COALESCE(SUM(pr.scan_count), 0) as scan_count,
+        COALESCE(SUM(pr.follow_count), 0) as follow_count
+       FROM wechat_accounts wa
+       LEFT JOIN promotion_records pr ON wa.id = pr.wechat_id
+       LEFT JOIN employees e ON pr.employee_id = e.id
+       WHERE wa.id IS NOT NULL ${extraCondition.replace('fr.wechat_id', 'pr.wechat_id')}
+       GROUP BY wa.id, wa.account_name
+       ORDER BY follow_count DESC`,
+      extraParams
     );
 
-    // 推广统计
-    const [promotionStats] = await pool.query(
+    // 3. 按员工统计
+    const [employeeStats] = await pool.query(
       `SELECT 
-        COUNT(*) as total_records,
-        SUM(scan_count) as total_scans,
-        SUM(follow_count) as total_follows,
-        COUNT(DISTINCT employee_id) as active_employees
-       FROM promotion_records`
-    );
-
-    // 关注统计
-    const [followStats] = await pool.query(
-      `SELECT 
-        COUNT(*) as total_follows,
-        SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as current_follows,
-        SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as unfollows
-       FROM follow_records`
-    );
-
-    // 今日数据
-    const [todayStats] = await pool.query(
-      `SELECT 
-        (SELECT COUNT(*) FROM follow_records WHERE DATE(created_at) = CURDATE()) as today_follows,
-        (SELECT COUNT(*) FROM promotion_records WHERE DATE(created_at) = CURDATE()) as today_promotions,
-        (SELECT SUM(scan_count) FROM promotion_records WHERE DATE(updated_at) = CURDATE()) as today_scans`
-    );
-
-    res.json({
-      code: 200,
-      message: '获取成功',
-      timestamp: Date.now(),
-      data: {
-        employees: (employeeStats as any)[0],
-        accounts: (accountStats as any)[0],
-        promotions: (promotionStats as any)[0],
-        follows: (followStats as any)[0],
-        today: (todayStats as any)[0]
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// 获取员工排行榜
-router.get('/ranking/employees', async (req: AuthRequest, res, next) => {
-  try {
-    const { 
-      type = 'follow', // follow(关注数), scan(扫码数), promotion(推广数)
-      period = 'all', // all(全部), today(今天), week(本周), month(本月)
-      limit = 20 
-    } = req.query;
-
-    let dateFilter = '';
-    if (period === 'today') {
-      dateFilter = 'AND DATE(fr.created_at) = CURDATE()';
-    } else if (period === 'week') {
-      dateFilter = 'AND YEARWEEK(fr.created_at, 1) = YEARWEEK(CURDATE(), 1)';
-    } else if (period === 'month') {
-      dateFilter = 'AND YEAR(fr.created_at) = YEAR(CURDATE()) AND MONTH(fr.created_at) = MONTH(CURDATE())';
-    }
-
-    let orderBy = '';
-    if (type === 'follow') {
-      orderBy = 'follow_count DESC';
-    } else if (type === 'scan') {
-      orderBy = 'scan_count DESC';
-    } else {
-      orderBy = 'promotion_count DESC';
-    }
-
-    const [rows] = await pool.query(
-      `SELECT 
-        e.employee_id,
+        e.id as employee_id,
         e.name as employee_name,
         e.department,
-        e.position,
-        COUNT(DISTINCT fr.id) as follow_count,
-        SUM(pr.scan_count) as scan_count,
-        COUNT(DISTINCT pr.id) as promotion_count
+        COALESCE(SUM(pr.scan_count), 0) as total_scan_count,
+        COALESCE(SUM(pr.follow_count), 0) as total_follow_count
        FROM employees e
-       LEFT JOIN follow_records fr ON e.employee_id = fr.employee_id ${dateFilter}
-       LEFT JOIN promotion_records pr ON e.employee_id = pr.employee_id
-       WHERE e.bind_status = 1
-       GROUP BY e.employee_id, e.name, e.department, e.position
-       HAVING ${type === 'follow' ? 'follow_count' : type === 'scan' ? 'scan_count' : 'promotion_count'} > 0
-       ORDER BY ${orderBy}
-       LIMIT ?`,
-      [Number(limit)]
+       LEFT JOIN promotion_records pr ON e.id = pr.employee_id
+       WHERE 1=1${extraCondition ? extraCondition.replace('AND e.department', 'AND e.department') : ''}
+       GROUP BY e.id, e.name, e.department
+       HAVING total_scan_count > 0 OR total_follow_count > 0
+       ORDER BY total_follow_count DESC`,
+      extraParams.filter(p => typeof p === 'string' && !p.includes('wechat_id'))
     );
 
-    res.json({
-      code: 200,
-      message: '获取成功',
-      timestamp: Date.now(),
-      data: rows
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// 获取公众号排行榜
-router.get('/ranking/accounts', async (req: AuthRequest, res, next) => {
-  try {
-    const { limit = 20 } = req.query;
-
-    const [rows] = await pool.query(
+    // 4. 每个员工每个公众号的详细数据
+    const [employeeAccountStats] = await pool.query(
       `SELECT 
-        a.id,
-        a.account_name,
-        a.avatar,
-        COUNT(DISTINCT fr.id) as total_follows,
-        SUM(CASE WHEN fr.status = 1 THEN 1 ELSE 0 END) as current_follows,
-        COUNT(DISTINCT pr.id) as total_promotions,
-        SUM(pr.scan_count) as total_scans
-       FROM wechat_accounts a
-       LEFT JOIN follow_records fr ON a.id = fr.account_id
-       LEFT JOIN promotion_records pr ON a.id = pr.account_id
-       WHERE a.status = 1
-       GROUP BY a.id, a.account_name, a.avatar
-       ORDER BY current_follows DESC
-       LIMIT ?`,
-      [Number(limit)]
+        e.id as employee_id,
+        pr.wechat_id as account_id,
+        wa.account_name,
+        COALESCE(SUM(pr.scan_count), 0) as scan_count,
+        COALESCE(SUM(pr.follow_count), 0) as follow_count
+       FROM promotion_records pr
+       LEFT JOIN employees e ON pr.employee_id = e.id
+       LEFT JOIN wechat_accounts wa ON pr.wechat_id = wa.id
+       WHERE 1=1${extraCondition.replace('fr.wechat_id', 'pr.wechat_id')}
+       GROUP BY e.id, pr.wechat_id, wa.account_name`,
+      extraParams
     );
 
-    res.json({
-      code: 200,
-      message: '获取成功',
-      timestamp: Date.now(),
-      data: rows
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// 获取趋势数据
-router.get('/trend', async (req: AuthRequest, res, next) => {
-  try {
-    const { 
-      type = 'follow', // follow(关注), scan(扫码), promotion(推广)
-      period = 'week' // week(最近7天), month(最近30天), quarter(最近90天)
-    } = req.query;
-
-    let days = 7;
-    if (period === 'month') days = 30;
-    if (period === 'quarter') days = 90;
-
-    const [rows] = await pool.query(
+    // 5. 按部门统计
+    const [departmentStats] = await pool.query(
       `SELECT 
-        DATE(created_at) as date,
-        ${type === 'follow' ? 'COUNT(*)' : type === 'scan' ? 'SUM(scan_count)' : 'COUNT(*)'} as count
-       FROM ${type === 'follow' ? 'follow_records' : type === 'scan' ? 'promotion_records' : 'promotion_records'}
-       WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
-       GROUP BY DATE(created_at)
-       ORDER BY date ASC`,
-      [days]
+        e.department,
+        COALESCE(SUM(pr.scan_count), 0) as total_scan_count,
+        COALESCE(SUM(pr.follow_count), 0) as total_follow_count,
+        COUNT(DISTINCT pr.employee_id) as employee_count
+       FROM promotion_records pr
+       LEFT JOIN employees e ON pr.employee_id = e.id
+       WHERE 1=1${extraCondition.replace('fr.wechat_id', 'pr.wechat_id')}
+       GROUP BY e.department
+       ORDER BY total_follow_count DESC`,
+      extraParams
+    );
+
+    // 6. 趋势数据（按天）
+    const [trendData] = await pool.query(
+      `SELECT 
+        DATE(pr.updated_at) as date,
+        COALESCE(SUM(pr.scan_count), 0) as scan_count,
+        COALESCE(SUM(pr.follow_count), 0) as follow_count
+       FROM promotion_records pr
+       LEFT JOIN employees e ON pr.employee_id = e.id
+       WHERE ${timeCondition}${extraCondition.replace('fr.wechat_id', 'pr.wechat_id')}
+       GROUP BY DATE(pr.updated_at)
+       ORDER BY date ASC
+       LIMIT 90`,
+      allParams
     );
 
     res.json({
@@ -195,24 +146,37 @@ router.get('/trend', async (req: AuthRequest, res, next) => {
       message: '获取成功',
       timestamp: Date.now(),
       data: {
-        type,
-        period,
-        data: rows
+        summary: (summaryStats as any[])[0] || { total_scans: 0, total_follows: 0, active_employees: 0 },
+        accountStats: accountStats || [],
+        employeeStats: employeeStats || [],
+        employeeAccountStats: employeeAccountStats || [],
+        departmentStats: departmentStats || [],
+        trendData: trendData || [],
+        followDetails: []
       }
     });
   } catch (error) {
+    console.error('推广统计错误:', error);
     next(error);
   }
 });
 
-// 获取员工详细统计
-router.get('/employee/:employeeId', async (req: AuthRequest, res, next) => {
+// 获取员工推广详情
+router.get('/employee/:employeeId/detail', async (req: AuthRequest, res, next) => {
   try {
     const { employeeId } = req.params;
+    const { start_date, end_date } = req.query;
 
-    // 员工基本信息
+    let timeCondition = '1=1';
+    let timeParams: any[] = [employeeId];
+    
+    if (start_date && end_date) {
+      timeCondition = 'pr.updated_at >= ? AND pr.updated_at <= ?';
+      timeParams.push(String(start_date), String(end_date) + ' 23:59:59');
+    }
+
     const [employeeInfo] = await pool.query(
-      'SELECT * FROM employees WHERE employee_id = ?',
+      'SELECT * FROM employees WHERE id = ?',
       [employeeId]
     );
 
@@ -225,50 +189,18 @@ router.get('/employee/:employeeId', async (req: AuthRequest, res, next) => {
       });
     }
 
-    // 推广统计
-    const [promotionStats] = await pool.query(
+    const [accountStats] = await pool.query(
       `SELECT 
-        COUNT(*) as total_promotions,
-        SUM(scan_count) as total_scans,
-        SUM(follow_count) as total_follows
-       FROM promotion_records
-       WHERE employee_id = ?`,
-      [employeeId]
-    );
-
-    // 关注统计
-    const [followStats] = await pool.query(
-      `SELECT 
-        COUNT(*) as total_follows,
-        SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as current_follows,
-        SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as unfollows
-       FROM follow_records
-       WHERE employee_id = ?`,
-      [employeeId]
-    );
-
-    // 最近7天趋势
-    const [recentTrend] = await pool.query(
-      `SELECT 
-        DATE(created_at) as date,
-        COUNT(*) as count
-       FROM follow_records
-       WHERE employee_id = ? 
-       AND created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-       GROUP BY DATE(created_at)
-       ORDER BY date ASC`,
-      [employeeId]
-    );
-
-    // 推广记录列表
-    const [promotionList] = await pool.query(
-      `SELECT pr.*, a.account_name
+        wa.id as account_id,
+        wa.account_name,
+        COALESCE(SUM(pr.scan_count), 0) as scan_count,
+        COALESCE(SUM(pr.follow_count), 0) as follow_count
        FROM promotion_records pr
-       LEFT JOIN wechat_accounts a ON pr.account_id = a.id
-       WHERE pr.employee_id = ?
-       ORDER BY pr.created_at DESC
-       LIMIT 10`,
-      [employeeId]
+       LEFT JOIN wechat_accounts wa ON pr.wechat_id = wa.id
+       WHERE pr.employee_id = ? AND ${timeCondition}
+       GROUP BY wa.id, wa.account_name
+       ORDER BY follow_count DESC`,
+      timeParams
     );
 
     res.json({
@@ -276,11 +208,9 @@ router.get('/employee/:employeeId', async (req: AuthRequest, res, next) => {
       message: '获取成功',
       timestamp: Date.now(),
       data: {
-        employee: (employees as any)[0],
-        promotion_stats: (promotionStats as any)[0],
-        follow_stats: (followStats as any)[0],
-        recent_trend: recentTrend,
-        promotion_list: promotionList
+        employee: (employees as any[])[0],
+        accountStats,
+        followList: []
       }
     });
   } catch (error) {
@@ -288,104 +218,14 @@ router.get('/employee/:employeeId', async (req: AuthRequest, res, next) => {
   }
 });
 
-// 获取公众号详细统计
-router.get('/account/:accountId', async (req: AuthRequest, res, next) => {
+// 获取概览统计数据
+router.get('/overview', async (req: AuthRequest, res, next) => {
   try {
-    const { accountId } = req.params;
-
-    // 公众号基本信息
-    const [accountInfo] = await pool.query(
-      'SELECT * FROM wechat_accounts WHERE id = ?',
-      [accountId]
-    );
-
-    const accounts = accountInfo as any[];
-    if (accounts.length === 0) {
-      return res.status(404).json({
-        code: 404,
-        message: '公众号不存在',
-        timestamp: Date.now()
-      });
-    }
-
-    // 推广统计
-    const [promotionStats] = await pool.query(
-      `SELECT 
-        COUNT(*) as total_promotions,
-        COUNT(DISTINCT employee_id) as active_employees,
-        SUM(scan_count) as total_scans,
-        SUM(follow_count) as total_follows
-       FROM promotion_records
-       WHERE account_id = ?`,
-      [accountId]
-    );
-
-    // 关注统计
-    const [followStats] = await pool.query(
-      `SELECT 
-        COUNT(*) as total_follows,
-        SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as current_follows,
-        SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as unfollows
-       FROM follow_records
-       WHERE account_id = ?`,
-      [accountId]
-    );
-
-    // 员工排行
-    const [employeeRanking] = await pool.query(
-      `SELECT 
-        e.employee_id,
-        e.name as employee_name,
-        COUNT(DISTINCT fr.id) as follow_count
-       FROM follow_records fr
-       LEFT JOIN employees e ON fr.employee_id = e.employee_id
-       WHERE fr.account_id = ?
-       GROUP BY e.employee_id, e.name
-       ORDER BY follow_count DESC
-       LIMIT 10`,
-      [accountId]
-    );
-
-    // 最近7天趋势
-    const [recentTrend] = await pool.query(
-      `SELECT 
-        DATE(created_at) as date,
-        COUNT(*) as count
-       FROM follow_records
-       WHERE account_id = ? 
-       AND created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-       GROUP BY DATE(created_at)
-       ORDER BY date ASC`,
-      [accountId]
-    );
-
-    res.json({
-      code: 200,
-      message: '获取成功',
-      timestamp: Date.now(),
-      data: {
-        account: (accounts as any)[0],
-        promotion_stats: (promotionStats as any)[0],
-        follow_stats: (followStats as any)[0],
-        employee_ranking: employeeRanking,
-        recent_trend: recentTrend
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// 导出统计数据
-router.get('/export', async (req: AuthRequest, res, next) => {
-  try {
-    // 获取概览数据
     const [employeeStats] = await pool.query(
       `SELECT 
         COUNT(*) as total,
-        SUM(CASE WHEN bind_status = 1 THEN 1 ELSE 0 END) as active,
-        SUM(CASE WHEN bind_status = 0 THEN 1 ELSE 0 END) as inactive,
-        SUM(CASE WHEN bind_status = 2 THEN 1 ELSE 0 END) as disabled
+        SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as active,
+        SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as inactive
        FROM employees`
     );
 
@@ -400,68 +240,108 @@ router.get('/export', async (req: AuthRequest, res, next) => {
     const [promotionStats] = await pool.query(
       `SELECT 
         COUNT(*) as total_records,
-        SUM(scan_count) as total_scans,
-        SUM(follow_count) as total_follows,
+        COALESCE(SUM(scan_count), 0) as total_scans,
+        COALESCE(SUM(follow_count), 0) as total_follows,
         COUNT(DISTINCT employee_id) as active_employees
        FROM promotion_records`
     );
 
-    const [followStats] = await pool.query(
-      `SELECT 
-        COUNT(*) as total_follows,
-        SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as current_follows,
-        SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as unfollows
-       FROM follow_records`
-    );
+    res.json({
+      code: 200,
+      message: '获取成功',
+      timestamp: Date.now(),
+      data: {
+        employees: (employeeStats as any[])[0] || { total: 0, active: 0, inactive: 0 },
+        accounts: (accountStats as any[])[0] || { total: 0, active: 0, inactive: 0 },
+        promotions: (promotionStats as any[])[0] || { total_records: 0, total_scans: 0, total_follows: 0, active_employees: 0 }
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
-    const overview = {
-      employees: (employeeStats as any)[0],
-      accounts: (accountStats as any)[0],
-      promotions: (promotionStats as any)[0],
-      follows: (followStats as any)[0]
-    };
+// 获取员工排行榜
+router.get('/ranking/employees', async (req: AuthRequest, res, next) => {
+  try {
+    const { type = 'follow', limit = 20 } = req.query;
 
-    // 获取员工排行
-    const [employeeRanking] = await pool.query(
+    const [rows] = await pool.query(
       `SELECT 
-        e.employee_id,
+        e.id as employee_id,
         e.name as employee_name,
         e.department,
         e.position,
-        COUNT(DISTINCT fr.id) as follow_count,
-        SUM(pr.scan_count) as scan_count,
+        COALESCE(SUM(pr.follow_count), 0) as follow_count,
+        COALESCE(SUM(pr.scan_count), 0) as scan_count,
         COUNT(DISTINCT pr.id) as promotion_count
        FROM employees e
-       LEFT JOIN follow_records fr ON e.employee_id = fr.employee_id
-       LEFT JOIN promotion_records pr ON e.employee_id = pr.employee_id
-       WHERE e.bind_status = 1
-       GROUP BY e.employee_id, e.name, e.department, e.position
-       HAVING follow_count > 0
+       LEFT JOIN promotion_records pr ON e.id = pr.employee_id
+       WHERE e.status = 1
+       GROUP BY e.id, e.name, e.department, e.position
+       HAVING ${type === 'follow' ? 'follow_count' : type === 'scan' ? 'scan_count' : 'promotion_count'} > 0
+       ORDER BY ${type === 'follow' ? 'follow_count' : type === 'scan' ? 'scan_count' : 'promotion_count'} DESC
+       LIMIT ?`,
+      [Number(limit)]
+    );
+
+    res.json({
+      code: 200,
+      message: '获取成功',
+      timestamp: Date.now(),
+      data: rows
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// 导出统计数据
+router.get('/export', async (req: AuthRequest, res, next) => {
+  try {
+    const [employeeStats] = await pool.query(
+      'SELECT COUNT(*) as total, SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as active FROM employees'
+    );
+
+    const [accountStats] = await pool.query(
+      'SELECT COUNT(*) as total, SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as active FROM wechat_accounts'
+    );
+
+    const overview = {
+      employees: (employeeStats as any[])[0],
+      accounts: (accountStats as any)[0]
+    };
+
+    const [employeeRanking] = await pool.query(
+      `SELECT 
+        e.id as employee_id,
+        e.name as employee_name,
+        e.department,
+        e.position,
+        COALESCE(SUM(pr.follow_count), 0) as follow_count,
+        COALESCE(SUM(pr.scan_count), 0) as scan_count
+       FROM employees e
+       LEFT JOIN promotion_records pr ON e.id = pr.employee_id
+       GROUP BY e.id, e.name, e.department, e.position
        ORDER BY follow_count DESC
        LIMIT 20`
     );
 
-    // 获取公众号统计
     const [accountStatsData] = await pool.query(
       `SELECT 
-        a.id,
-        a.account_name,
-        COUNT(DISTINCT fr.id) as total_follows,
-        SUM(CASE WHEN fr.status = 1 THEN 1 ELSE 0 END) as current_follows,
-        COUNT(DISTINCT pr.id) as total_promotions,
-        SUM(pr.scan_count) as total_scans
-       FROM wechat_accounts a
-       LEFT JOIN follow_records fr ON a.id = fr.account_id
-       LEFT JOIN promotion_records pr ON a.id = pr.account_id
-       WHERE a.status = 1
-       GROUP BY a.id, a.account_name
-       ORDER BY current_follows DESC`
+        wa.account_name,
+        COALESCE(SUM(pr.follow_count), 0) as total_follows,
+        COALESCE(SUM(pr.scan_count), 0) as total_scans
+       FROM wechat_accounts wa
+       LEFT JOIN promotion_records pr ON wa.id = pr.wechat_id
+       GROUP BY wa.id, wa.account_name
+       ORDER BY total_follows DESC`
     );
 
-    await exportStats(res, {
-      overview,
-      employeeRanking: employeeRanking as any[],
-      accountStats: accountStatsData as any[]
+    await exportStats(res, { 
+      overview, 
+      employeeRanking: employeeRanking as any[], 
+      accountStats: accountStatsData as any[] 
     });
   } catch (error) {
     next(error);
@@ -469,4 +349,3 @@ router.get('/export', async (req: AuthRequest, res, next) => {
 });
 
 export default router;
-

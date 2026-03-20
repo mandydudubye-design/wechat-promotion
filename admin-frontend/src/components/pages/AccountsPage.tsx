@@ -9,13 +9,12 @@ import {
   Plus, 
   Edit, 
   Trash2, 
-  Settings, 
-  Users, 
-  QrCode,
+  Settings,
   CheckCircle,
   XCircle,
   Copy,
-  Save
+  Save,
+  MessageCircle
 } from 'lucide-react'
 
 interface Account {
@@ -71,6 +70,10 @@ export function AccountsPage() {
   })
 
   const handleAdd = () => {
+    if (!newAccount.accountName || !newAccount.appId) {
+      alert('请填写公众号名称和AppID')
+      return
+    }
     const account: Account = {
       id: `acct_${Date.now()}`,
       accountName: newAccount.accountName,
@@ -106,7 +109,6 @@ export function AccountsPage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
-    // TODO: Show toast notification
   }
 
   return (
@@ -114,7 +116,7 @@ export function AccountsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">多公众号管理</h1>
+          <h1 className="text-3xl font-bold tracking-tight">公众号管理</h1>
           <p className="text-muted-foreground">
             管理员工可推广的微信公众号
           </p>
@@ -135,7 +137,7 @@ export function AccountsPage() {
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="accountName">公众号名称</Label>
+                <Label htmlFor="accountName">公众号名称 *</Label>
                 <Input
                   id="accountName"
                   placeholder="企业服务号"
@@ -144,7 +146,7 @@ export function AccountsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="appId">AppID</Label>
+                <Label htmlFor="appId">AppID *</Label>
                 <Input
                   id="appId"
                   placeholder="wx1234567890abcdef"
@@ -185,18 +187,15 @@ export function AccountsPage() {
         </Dialog>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Simple Stats */}
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">公众号总数</CardTitle>
-            <Settings className="h-4 w-4 text-muted-foreground" />
+            <MessageCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{accounts.length}</div>
-            <p className="text-xs text-muted-foreground">
-              系统中的所有公众号
-            </p>
           </CardContent>
         </Card>
 
@@ -206,38 +205,9 @@ export function AccountsPage() {
             <CheckCircle className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-success">
               {accounts.filter(a => a.status === 'active').length}
             </div>
-            <p className="text-xs text-muted-foreground">
-              当前可推广
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">推广员工数</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">156</div>
-            <p className="text-xs text-muted-foreground">
-              总员工数
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">总扫码数</CardTitle>
-            <QrCode className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12,345</div>
-            <p className="text-xs text-muted-foreground">
-              累计扫码
-            </p>
           </CardContent>
         </Card>
       </div>
@@ -247,7 +217,7 @@ export function AccountsPage() {
         <CardHeader>
           <CardTitle>公众号列表</CardTitle>
           <CardDescription>
-            管理和配置所有微信公众号
+            管理和配置所有微信公众号，点击启用/停用控制员工是否可推广
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -258,11 +228,9 @@ export function AccountsPage() {
                 className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-center gap-4">
-                  <img
-                    src={account.avatar}
-                    alt={account.accountName}
-                    className="h-12 w-12 rounded-lg"
-                  />
+                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                    <MessageCircle className="w-6 h-6 text-white" />
+                  </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold">{account.accountName}</h3>
@@ -271,7 +239,7 @@ export function AccountsPage() {
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{account.description}</p>
-                    <div className="flex items-center gap-4 mt-1">
+                    <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-muted-foreground">
                         AppID: {account.appId}
                       </span>
@@ -364,7 +332,7 @@ export function AccountsPage() {
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               取消
             </Button>
-            <Button>
+            <Button onClick={() => setIsEditDialogOpen(false)}>
               <Save className="mr-2 h-4 w-4" />
               保存
             </Button>

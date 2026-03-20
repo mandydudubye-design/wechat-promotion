@@ -6,9 +6,7 @@ export const mockEmployees: Employee[] = [
     employeeNo: 'EMP001',
     name: '张伟',
     department: '行政部',
-    position: '行政主管',
     phone: '13800138001',
-    email: 'zhangwei@company.com',
     openid: 'oxxxxxxxx001',
     bindStatus: 1,
     bindTime: '2026-03-01 10:30:00',
@@ -18,7 +16,6 @@ export const mockEmployees: Employee[] = [
     sceneId: 'scene_001',
     promotionCount: 15,
     createdAt: '2026-02-20 09:00:00',
-    // 多公众号关注状态
     followStatuses: [
       { accountId: 'acc001', accountName: '主公众号', isFollowed: true, followTime: '2026-03-01 10:35:00' },
       { accountId: 'acc002', accountName: '推广号1', isFollowed: true, followTime: '2026-03-02 14:20:00' },
@@ -30,9 +27,7 @@ export const mockEmployees: Employee[] = [
     employeeNo: 'EMP002',
     name: '李娜',
     department: '人力资源部',
-    position: '人事专员',
     phone: '13800138002',
-    email: 'lina@company.com',
     openid: 'oxxxxxxxx002',
     bindStatus: 1,
     bindTime: '2026-03-01 14:20:00',
@@ -42,7 +37,6 @@ export const mockEmployees: Employee[] = [
     sceneId: 'scene_002',
     promotionCount: 28,
     createdAt: '2026-02-20 09:00:00',
-    // 多公众号关注状态 - 全部已关注
     followStatuses: [
       { accountId: 'acc001', accountName: '主公众号', isFollowed: true, followTime: '2026-03-01 14:25:00' },
       { accountId: 'acc002', accountName: '推广号1', isFollowed: true, followTime: '2026-03-02 09:10:00' },
@@ -54,9 +48,7 @@ export const mockEmployees: Employee[] = [
     employeeNo: 'EMP003',
     name: '王芳',
     department: '财务部',
-    position: '会计',
     phone: '13800138003',
-    email: 'wangfang@company.com',
     openid: 'oxxxxxxxx003',
     bindStatus: 1,
     bindTime: '2026-03-02 09:15:00',
@@ -66,7 +58,6 @@ export const mockEmployees: Employee[] = [
     sceneId: 'scene_003',
     promotionCount: 12,
     createdAt: '2026-02-20 09:00:00',
-    // 多公众号关注状态 - 只关注了主公众号
     followStatuses: [
       { accountId: 'acc001', accountName: '主公众号', isFollowed: true, followTime: '2026-03-02 09:20:00' },
       { accountId: 'acc002', accountName: '推广号1', isFollowed: false },
@@ -78,9 +69,7 @@ export const mockEmployees: Employee[] = [
     employeeNo: 'EMP004',
     name: '刘强',
     department: '技术部',
-    position: '技术主管',
     phone: '13800138004',
-    email: 'liuqiang@company.com',
     openid: 'oxxxxxxxx004',
     bindStatus: 1,
     bindTime: '2026-03-02 16:45:00',
@@ -89,7 +78,6 @@ export const mockEmployees: Employee[] = [
     promotionCount: 8,
     createdAt: '2026-02-20 09:00:00',
     followStatus: 1,
-    // 多公众号关注状态 - 关注了2个
     followStatuses: [
       { accountId: 'acc001', accountName: '主公众号', isFollowed: true, followTime: '2026-03-02 16:50:00' },
       { accountId: 'acc002', accountName: '推广号1', isFollowed: true, followTime: '2026-03-03 10:00:00' },
@@ -101,9 +89,7 @@ export const mockEmployees: Employee[] = [
     employeeNo: 'EMP005',
     name: '陈静',
     department: '市场部',
-    position: '市场专员',
     phone: '13800138005',
-    email: 'chenjing@company.com',
     bindStatus: 0,
     promotionCount: 0,
     createdAt: '2026-02-20 09:00:00',
@@ -114,9 +100,7 @@ export const mockEmployees: Employee[] = [
     employeeNo: 'EMP006',
     name: '赵敏',
     department: '行政部',
-    position: '行政助理',
     phone: '13800138006',
-    email: 'zhaomin@company.com',
     openid: 'oxxxxxxxx006',
     bindStatus: 1,
     bindTime: '2026-03-03 11:00:00',
@@ -126,7 +110,6 @@ export const mockEmployees: Employee[] = [
     sceneId: 'scene_006',
     promotionCount: 22,
     createdAt: '2026-02-20 09:00:00',
-    // 多公众号关注状态 - 全部已关注
     followStatuses: [
       { accountId: 'acc001', accountName: '主公众号', isFollowed: true, followTime: '2026-03-03 11:05:00' },
       { accountId: 'acc002', accountName: '推广号1', isFollowed: true, followTime: '2026-03-03 11:10:00' },
@@ -138,9 +121,7 @@ export const mockEmployees: Employee[] = [
     employeeNo: 'EMP007',
     name: '孙磊',
     department: '销售部',
-    position: '销售经理',
     phone: '13800138007',
-    email: 'sunlei@company.com',
     openid: 'oxxxxxxxx007',
     bindStatus: 1,
     bindTime: '2026-03-03 15:30:00',
@@ -150,7 +131,6 @@ export const mockEmployees: Employee[] = [
     sceneId: 'scene_007',
     promotionCount: 35,
     createdAt: '2026-02-20 09:00:00',
-    // 多公众号关注状态 - 关注了2个
     followStatuses: [
       { accountId: 'acc001', accountName: '主公众号', isFollowed: true, followTime: '2026-03-03 15:35:00' },
       { accountId: 'acc002', accountName: '推广号1', isFollowed: false },
@@ -162,9 +142,7 @@ export const mockEmployees: Employee[] = [
     employeeNo: 'EMP008',
     name: '周婷',
     department: '客户服务部',
-    position: '客服主管',
     phone: '13800138008',
-    email: 'zhouting@company.com',
     bindStatus: 0,
     promotionCount: 0,
     createdAt: '2026-02-20 09:00:00',
@@ -360,4 +338,74 @@ export const followStatusOptions = [
   { label: '全部状态', value: -1 },
   { label: '未关注', value: 0 },
   { label: '已关注', value: 1 },
+]
+
+// 公众号数据
+export interface WechatAccount {
+  id: string
+  name: string
+  avatar?: string
+  totalFollowers: number
+  employeeFollowers: number
+  todayNew: number
+  weekNew: number
+  monthNew: number
+  trendData: { date: string; newFollow: number; employeeFollow: number }[]
+}
+
+export const mockWechatAccounts: WechatAccount[] = [
+  {
+    id: 'acc001',
+    name: '主公众号',
+    totalFollowers: 12580,
+    employeeFollowers: 6,
+    todayNew: 45,
+    weekNew: 312,
+    monthNew: 1250,
+    trendData: [
+      { date: '03-03', newFollow: 38, employeeFollow: 1 },
+      { date: '03-04', newFollow: 52, employeeFollow: 2 },
+      { date: '03-05', newFollow: 41, employeeFollow: 1 },
+      { date: '03-06', newFollow: 63, employeeFollow: 1 },
+      { date: '03-07', newFollow: 55, employeeFollow: 0 },
+      { date: '03-08', newFollow: 48, employeeFollow: 0 },
+      { date: '03-09', newFollow: 45, employeeFollow: 1 },
+    ],
+  },
+  {
+    id: 'acc002',
+    name: '推广号1',
+    totalFollowers: 8920,
+    employeeFollowers: 4,
+    todayNew: 32,
+    weekNew: 198,
+    monthNew: 860,
+    trendData: [
+      { date: '03-03', newFollow: 28, employeeFollow: 0 },
+      { date: '03-04', newFollow: 35, employeeFollow: 1 },
+      { date: '03-05', newFollow: 22, employeeFollow: 0 },
+      { date: '03-06', newFollow: 41, employeeFollow: 1 },
+      { date: '03-07', newFollow: 38, employeeFollow: 0 },
+      { date: '03-08', newFollow: 30, employeeFollow: 0 },
+      { date: '03-09', newFollow: 32, employeeFollow: 2 },
+    ],
+  },
+  {
+    id: 'acc003',
+    name: '推广号2',
+    totalFollowers: 5460,
+    employeeFollowers: 3,
+    todayNew: 18,
+    weekNew: 125,
+    monthNew: 520,
+    trendData: [
+      { date: '03-03', newFollow: 15, employeeFollow: 0 },
+      { date: '03-04', newFollow: 22, employeeFollow: 1 },
+      { date: '03-05', newFollow: 18, employeeFollow: 0 },
+      { date: '03-06', newFollow: 25, employeeFollow: 0 },
+      { date: '03-07', newFollow: 20, employeeFollow: 1 },
+      { date: '03-08', newFollow: 17, employeeFollow: 0 },
+      { date: '03-09', newFollow: 18, employeeFollow: 1 },
+    ],
+  },
 ]

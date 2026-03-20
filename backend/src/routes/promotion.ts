@@ -26,10 +26,10 @@ router.get('/records', async (req: AuthRequest, res, next) => {
     const offset = (Number(page) - 1) * Number(pageSize);
 
     let query = `
-      SELECT pr.*, e.name as employee_name, a.account_name 
+      SELECT pr.*, e.name as employee_name, wa.account_name 
       FROM promotion_records pr
       LEFT JOIN employees e ON pr.employee_id = e.employee_id
-      LEFT JOIN wechat_accounts a ON pr.account_id = a.id
+      LEFT JOIN wechat_accounts wa ON pr.account_id = wa.id
       WHERE 1=1
     `;
     let params: any[] = [];
@@ -84,7 +84,7 @@ router.get('/records', async (req: AuthRequest, res, next) => {
     }
 
     if (accountId) {
-      countQuery += ' AND pr.account_id = ?';
+      countQuery += ' AND pr.wechat_id = ?';
       countParams.push(accountId);
     }
 
@@ -117,277 +117,16 @@ router.get('/records', async (req: AuthRequest, res, next) => {
   }
 });
 
-// 创建推广记录（生成推广二维码）
-router.post('/create', async (req: AuthRequest, res, next) => {
-  try {
-    const { employee_id, account_id, description } = req.body;
-
-    if (!employee_id || !account_id) {
-      throw new ApiError(400, '员工ID和公众号ID不能为空');
-    }
-
-    // 检查员工是否存在且已绑定
-    const [employees] = await pool.query(
-      'SELECT * FROM employees WHERE employee_id = ? AND bind_status = 1',
-      [employee_id]
-    );
-
-    const employeeList = employees as any[];
-    if (employeeList.length === 0) {
-      throw new ApiError(400, '员工不存在或未绑定');
-    }
-
-    // 检查公众号是否存在且已启用
-    const [accounts] = await pool.query(
-      'SELECT * FROM wechat_accounts WHERE id = ? AND status = 1',
-      [account_id]
-    );
-
-    const accountList = accounts as any[];
-    if (accountList.length === 0) {
-      throw new ApiError(400, '公众号不存在或未启用');
-    }
-
-    // 生成场景值（唯一标识）
-    const scene_str = `emp_${employee_id}_${Date.now()}`;
-    const scene_id = crypto.randomBytes(4).readUInt32BE(0) % 1000000;
-
-    // 创建推广记录
-    const [result] = await pool.query(
-      'INSERT INTO promotion_records (employee_id, account_id, scene_str, scene_id, description) VALUES (?, ?, ?, ?, ?)',
-      [employee_id, account_id, scene_str, scene_id, description]
-    );
-
-    const insertId = (result as any).insertId;
-
-    // TODO: 调用微信API生成带参数二维码
-    // 这里暂时返回模拟数据
-    const qrCodeUrl = `https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token=TOKEN`;
-
-    res.json({
-      code: 200,
-      message: '创建成功',
-      timestamp: Date.now(),
-      data: {
-        id: insertId,
-        employee_id,
-        account_id,
-        scene_str,
-        scene_id,
-        qr_code_url: qrCodeUrl,
-        // 生成二维码图片URL（实际应该调用微信API）
-        qr_image: `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${scene_str}`,
-        scan_count: 0,
-        follow_count: 0,
-        created_at: new Date()
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// 获取推广详情
-router.get('/records/:id', async (req: AuthRequest, res, next) => {
-  try {
-    const { id } = req.params;
-
-    const [rows] = await pool.query(
-      `SELECT pr.*, e.name as employee_name, a.account_name 
-       FROM promotion_records pr
-       LEFT JOIN employees e ON pr.employee_id = e.employee_id
-       LEFT JOIN wechat_accounts a ON pr.account_id = a.id
-       WHERE pr.id = ?`,
-      [id]
-    );
-
-    const records = rows as any[];
-    if (records.length === 0) {
-      throw new ApiError(404, '推广记录不存在');
-    }
-
-    res.json({
-      code: 200,
-      message: '获取成功',
-      timestamp: Date.now(),
-      data: (records as any)[0]
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// 更新推广数据（扫码数、关注数）
-router.put('/records/:id/stats', async (req: AuthRequest, res, next) => {
-  try {
-    const { id } = req.params;
-    const { scan_count, follow_count } = req.body;
-
-    const updates: string[] = [];
-    const params: any[] = [];
-
-    if (scan_count !== undefined) {
-      updates.push('scan_count = ?');
-      params.push(scan_count);
-    }
-
-    if (follow_count !== undefined) {
-      updates.push('follow_count = ?');
-      params.push(follow_count);
-    }
-
-    if (updates.length === 0) {
-      throw new ApiError(400, '没有要更新的字段');
-    }
-
-    updates.push('updated_at = NOW()');
-    params.push(id);
-
-    await pool.query(
-      `UPDATE promotion_records SET ${updates.join(', ')} WHERE id = ?`,
-      params
-    );
-
-    res.json({
-      code: 200,
-      message: '更新成功',
-      timestamp: Date.now()
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// 删除推广记录
-router.delete('/records/:id', authorize('admin'), async (req: AuthRequest, res, next) => {
-  try {
-    const { id } = req.params;
-
-    await pool.query('DELETE FROM promotion_records WHERE id = ?', [id]);
-
-    res.json({
-      code: 200,
-      message: '删除成功',
-      timestamp: Date.now()
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// 获取推广统计数据
-router.get('/stats', async (req: AuthRequest, res, next) => {
-  try {
-    const { employee_id, account_id, start_date, end_date } = req.query;
-
-    let whereClause = 'WHERE 1=1';
-    let params: any[] = [];
-
-    if (employee_id) {
-      whereClause += ' AND employee_id = ?';
-      params.push(employee_id);
-    }
-
-    if (account_id) {
-      whereClause += ' AND account_id = ?';
-      params.push(account_id);
-    }
-
-    if (start_date) {
-      whereClause += ' AND created_at >= ?';
-      params.push(start_date);
-    }
-
-    if (end_date) {
-      whereClause += ' AND created_at <= ?';
-      params.push(end_date);
-    }
-
-    // 总体统计
-    const [totalStats] = await pool.query(
-      `SELECT 
-        COUNT(*) as total_records,
-        SUM(scan_count) as total_scans,
-        SUM(follow_count) as total_follows,
-        AVG(scan_count) as avg_scans,
-        AVG(follow_count) as avg_follows
-       FROM promotion_records ${whereClause}`,
-      params
-    );
-
-    // 员工排行
-    const [employeeRanking] = await pool.query(
-      `SELECT 
-        e.employee_id,
-        e.name as employee_name,
-        COUNT(*) as record_count,
-        SUM(pr.scan_count) as total_scans,
-        SUM(pr.follow_count) as total_follows
-       FROM promotion_records pr
-       LEFT JOIN employees e ON pr.employee_id = e.employee_id
-       ${whereClause}
-       GROUP BY e.employee_id, e.name
-       ORDER BY total_follows DESC
-       LIMIT 10`,
-      params
-    );
-
-    // 公众号统计
-    const [accountStats] = await pool.query(
-      `SELECT 
-        a.id,
-        a.account_name,
-        COUNT(*) as record_count,
-        SUM(pr.scan_count) as total_scans,
-        SUM(pr.follow_count) as total_follows
-       FROM promotion_records pr
-       LEFT JOIN wechat_accounts a ON pr.account_id = a.id
-       ${whereClause}
-       GROUP BY a.id, a.account_name
-       ORDER BY total_follows DESC`,
-      params
-    );
-
-    // 时间趋势（每日统计）
-    const [timeTrend] = await pool.query(
-      `SELECT 
-        DATE(created_at) as date,
-        COUNT(*) as record_count,
-        SUM(scan_count) as total_scans,
-        SUM(follow_count) as total_follows
-       FROM promotion_records ${whereClause}
-       GROUP BY DATE(created_at)
-       ORDER BY date DESC
-       LIMIT 30`,
-      params
-    );
-
-    res.json({
-      code: 200,
-      message: '获取成功',
-      timestamp: Date.now(),
-      data: {
-        total: (totalStats as any)[0],
-        employee_ranking: employeeRanking,
-        account_stats: accountStats,
-        time_trend: timeTrend
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-// 导出推广数据
+// 导出推广记录
 router.get('/export', async (req: AuthRequest, res, next) => {
   try {
     const { keyword, employeeId, accountId, startDate, endDate } = req.query;
 
     let query = `
-      SELECT pr.*, e.name as employee_name, a.account_name 
+      SELECT pr.*, e.name as employee_name, wa.account_name 
       FROM promotion_records pr
-      LEFT JOIN employees e ON pr.employee_id = e.employee_id
-      LEFT JOIN wechat_accounts a ON pr.account_id = a.id
+      LEFT JOIN employees e ON pr.employee_id = e.id
+      LEFT JOIN wechat_accounts wa ON pr.wechat_id = wa.id
       WHERE 1=1
     `;
     let params: any[] = [];
@@ -403,7 +142,7 @@ router.get('/export', async (req: AuthRequest, res, next) => {
     }
 
     if (accountId) {
-      query += ' AND pr.account_id = ?';
+      query += ' AND pr.wechat_id = ?';
       params.push(accountId);
     }
 
@@ -427,5 +166,155 @@ router.get('/export', async (req: AuthRequest, res, next) => {
   }
 });
 
-export default router;
+// 生成推广二维码参数
+router.post('/generate-qrcode', async (req: AuthRequest, res, next) => {
+  try {
+    const { employee_id, account_id } = req.body;
 
+    if (!employee_id || !account_id) {
+      throw new ApiError(400, '员工ID和公众号ID不能为空');
+    }
+
+    // 检查员工是否存在且已绑定
+    const [employees] = await pool.query(
+      'SELECT * FROM employees WHERE id = ? AND bind_status = 1',
+      [employee_id]
+    );
+
+    const employeeList = employees as any[];
+    if (employeeList.length === 0) {
+      throw new ApiError(400, '员工不存在或未绑定');
+    }
+
+    // 检查公众号是否存在且已启用
+    const [accounts] = await pool.query(
+      'SELECT * FROM wechat_accounts WHERE id = ? AND status = 1',
+      [account_id]
+    );
+
+    const accountList = accounts as any[];
+    if (accountList.length === 0) {
+      throw new ApiError(400, '公众号不存在或未启用');
+    }
+
+    // 生成场景字符串
+    const sceneStr = `promo_${employee_id}_${account_id}_${Date.now()}`;
+    
+    // 检查是否已存在相同的员工+公众号推广记录
+    const [existing] = await pool.query(
+      'SELECT * FROM promotion_records WHERE employee_id = ? AND wechat_id = ?',
+      [employee_id, account_id]
+    );
+
+    if ((existing as any[]).length > 0) {
+      // 更新现有记录
+      await pool.query(
+        'UPDATE promotion_records SET scene_str = ?, updated_at = NOW() WHERE employee_id = ? AND wechat_id = ?',
+        [sceneStr, employee_id, account_id]
+      );
+    } else {
+      // 创建新的推广记录
+      await pool.query(
+        'INSERT INTO promotion_records (employee_id, wechat_id, scene_str, scan_count, follow_count) VALUES (?, ?, ?, 0, 0)',
+        [employee_id, account_id, sceneStr]
+      );
+    }
+
+    res.json({
+      code: 200,
+      message: '生成成功',
+      timestamp: Date.now(),
+      data: {
+        scene_str: sceneStr,
+        employee_id,
+        account_id,
+        employee_name: employeeList[0].name,
+        account_name: accountList[0].account_name
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// 获取推广统计
+router.get('/statistics', async (req: AuthRequest, res, next) => {
+  try {
+    // 总体统计
+    const [totalStats] = await pool.query(`
+      SELECT 
+        COUNT(DISTINCT pr.employee_id) as total_employees,
+        COUNT(DISTINCT pr.wechat_id) as total_accounts,
+        COALESCE(SUM(pr.scan_count), 0) as total_scans,
+        COALESCE(SUM(pr.follow_count), 0) as total_follows
+      FROM promotion_records pr
+    `);
+
+    // 按员工统计
+    const [employeeStats] = await pool.query(`
+      SELECT 
+        e.id,
+        e.name,
+        e.department,
+        COALESCE(SUM(pr.scan_count), 0) as scan_count,
+        COALESCE(SUM(pr.follow_count), 0) as follow_count
+      FROM employees e
+      LEFT JOIN promotion_records pr ON e.id = pr.employee_id
+      GROUP BY e.id, e.name, e.department
+      ORDER BY follow_count DESC
+      LIMIT 10
+    `);
+
+    // 按公众号统计
+    const [accountStats] = await pool.query(`
+      SELECT 
+        wa.id,
+        wa.account_name,
+        COALESCE(SUM(pr.scan_count), 0) as scan_count,
+        COALESCE(SUM(pr.follow_count), 0) as follow_count
+      FROM wechat_accounts wa
+      LEFT JOIN promotion_records pr ON wa.id = pr.wechat_id
+      GROUP BY wa.id, wa.account_name
+      ORDER BY follow_count DESC
+    `);
+
+    res.json({
+      code: 200,
+      message: '获取成功',
+      timestamp: Date.now(),
+      data: {
+        total: (totalStats as any)[0],
+        employees: employeeStats,
+        accounts: accountStats
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// 更新推广数据（内部接口）
+router.post('/update-stats', async (req: AuthRequest, res, next) => {
+  try {
+    const { scene_str, scan_increment = 0, follow_increment = 0 } = req.body;
+
+    if (!scene_str) {
+      throw new ApiError(400, '场景字符串不能为空');
+    }
+
+    await pool.query(
+      'UPDATE promotion_records SET scan_count = scan_count + ?, follow_count = follow_count + ?, updated_at = NOW() WHERE scene_str = ?',
+      [scan_increment, follow_increment, scene_str]
+    );
+
+    res.json({
+      code: 200,
+      message: '更新成功',
+      timestamp: Date.now()
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+export default router;

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -6,27 +6,108 @@ import { Label } from '../ui/label'
 import { Badge } from '../ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog'
-import { Plus, Search, Upload, Download, QrCode, ChevronDown, ChevronUp, Wechat } from 'lucide-react'
-import { mockEmployees, departments } from '../../data/mockData'
-import type { Employee, AccountFollowStatus } from '../../types'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import { Plus, Search, Upload, Download, QrCode, ChevronDown, ChevronUp, MessageCircle, UserCheck, UserX, Share2, Users, Link2 } from 'lucide-react'
+import type { Employee } from '../../types'
 
-// 公众号列表配置（后续可从后端API获取）
-const wechatAccounts = [
-  { id: 'acc001', name: '主公众号' },
-  { id: 'acc002', name: '推广号1' },
-  { id: 'acc003', name: '推广号2' },
-]
+const API_BASE = 'http://localhost:3001/api'
+
+// 公众号类型
+interface WechatAccount {
+  id: number
+  account_name: string
+  account_id: string
+  color: string
+}
+
+// 推广记录类型
+interface PromotionRecord {
+  id: number
+  employee_id: string
+  account_id: number
+  scene_str: string
+  scan_count: number
+  follow_count: number
+}
+
+// 公众号颜色
+const ACCOUNT_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
 
 export function EmployeesPage() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedDepartment, setSelectedDepartment] = useState('全部部门')
+  const [selectedDepartment, setSelectedDepartment] = useState('全部')
+  const [selectedBindStatus, setSelectedBindStatus] = useState<'all' | 'bound' | 'unbound'>('all')
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [importDialogOpen, setImportDialogOpen] = useState(false)
-  const [viewQrCodeDialogOpen, setViewQrCodeDialogOpen] = useState(false)
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [expandedEmployees, setExpandedEmployees] = useState<Set<string>>(new Set())
+  const [universalBindDialogOpen, setUniversalBindDialogOpen] = useState(false)
+  
+  // 真实数据状态
+  const [wechatAccounts, setWechatAccounts] = useState<WechatAccount[]>([])
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [promotionRecords, setPromotionRecords] = useState<PromotionRecord[]>([])
+  const [departments, setDepartments] = useState<string[]>(['全部'])
+  const [loading, setLoading] = useState(true)
 
-  // 切换员工公众号详情展开/收起
+  // 从API获取数据
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        const headers = { 'Authorization': `Bearer ${token}` }
+        
+        // 获取公众号
+        const accountsRes = await fetch(`${API_BASE}/accounts`, { headers })
+        const accountsResult = await accountsRes.json()
+        const accounts = (accountsResult.data || []).map((acc: any, index: number) => ({
+          id: acc.id,
+          account_name: acc.account_name,
+          account_id: acc.account_id,
+          color: ACCOUNT_COLORS[index % ACCOUNT_COLORS.length]
+        }))
+        setWechatAccounts(accounts)
+        
+        // 获取员工
+        const employeesRes = await fetch(`${API_BASE}/employees`, { headers })
+        const employeesResult = await employeesRes.json()
+        const employeesData = (employeesResult.data?.list || employeesResult.data || []).map((emp: any) => ({
+          id: emp.employee_id,
+          employeeNo: emp.employee_id,
+          name: emp.name,
+          department: emp.department || '未分配',
+          phone: emp.phone || '',
+          bindStatus: emp.bind_status || 0,
+          bindTime: emp.bind_time,
+          wechatName: emp.wechat_name,
+          openid: emp.openid,
+          followStatuses: []
+        }))
+        setEmployees(employeesData)
+        
+        // 提取部门列表
+        const deptSet = new Set(['全部'])
+        employeesData.forEach((emp: Employee) => {
+          if (emp.department) deptSet.add(emp.department)
+        })
+        setDepartments(Array.from(deptSet))
+        
+        // 获取推广记录
+        const promoRes = await fetch(`${API_BASE}/promotion/records?pageSize=1000`, { headers })
+        const promoResult = await promoRes.json()
+        setPromotionRecords(promoResult.data?.list || [])
+        
+        setLoading(false)
+      } catch (error) {
+        console.error('获取数据失败', error)
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
+  // 切换员工详情展开/收起
   const toggleEmployeeExpand = (employeeId: string) => {
     setExpandedEmployees(prev => {
       const newSet = new Set(prev)
@@ -39,59 +120,55 @@ export function EmployeesPage() {
     })
   }
 
-  // 获取员工关注公众号数量
-  const getFollowedCount = (employee: Employee): number => {
-    if (employee.followStatuses && employee.followStatuses.length > 0) {
-      return employee.followStatuses.filter(s => s.isFollowed).length
-    }
-    // 兼容旧数据
-    return employee.followStatus === 1 ? 1 : 0
+  // 获取员工总推广数据
+  const getTotalPromotion = (employeeId: string) => {
+    const records = promotionRecords.filter(r => r.employee_id === employeeId)
+    let scanCount = 0, followCount = 0
+    records.forEach(r => {
+      scanCount += r.scan_count || 0
+      followCount += r.follow_count || 0
+    })
+    return { scanCount, followCount }
   }
 
-  // 获取总公众号数量
+  // 获取员工某公众号的推广数据
+  const getPromotionForAccount = (employeeId: string, accountId: number) => {
+    const record = promotionRecords.find(r => r.employee_id === employeeId && r.account_id === accountId)
+    return {
+      scanCount: record?.scan_count || 0,
+      followCount: record?.follow_count || 0
+    }
+  }
+
   const totalAccounts = wechatAccounts.length
 
-  const filteredEmployees = mockEmployees.filter((employee) => {
+  const filteredEmployees = employees.filter((employee) => {
     const matchesSearch = employee.name.includes(searchTerm) || employee.employeeNo.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesDepartment = selectedDepartment === '全部部门' || employee.department === selectedDepartment
-    // 只显示已绑定的员工
-    const matchesBindStatus = employee.bindStatus === 1
+    const matchesDepartment = selectedDepartment === '全部' || employee.department === selectedDepartment
+    const matchesBindStatus = selectedBindStatus === 'all' || 
+      (selectedBindStatus === 'bound' && employee.bindStatus === 1) ||
+      (selectedBindStatus === 'unbound' && employee.bindStatus !== 1)
     return matchesSearch && matchesDepartment && matchesBindStatus
   })
 
-  // 获取某个公众号的关注状态
-  const getFollowStatusForAccount = (employee: Employee, accountId: string): { status: string, followTime?: string } => {
-    if (employee.followStatuses && employee.followStatuses.length > 0) {
-      const status = employee.followStatuses.find(s => s.accountId === accountId)
-      return {
-        status: status?.isFollowed ? '已关注' : '未关注',
-        followTime: status?.followTime
-      }
-    }
-    // 兼容旧数据：假设第一个公众号使用旧的 followStatus 字段
-    if (accountId === 'acc001' && employee.followStatus === 1) {
-      return { status: '已关注', followTime: employee.followTime }
-    }
-    return { status: '未关注' }
-  }
+  // 统计数据
+  const totalEmployees = employees.length
+  const boundEmployees = employees.filter(e => e.bindStatus === 1).length
+  const unboundEmployees = totalEmployees - boundEmployees
 
   const handleAddEmployee = () => {
-    // TODO: 实现添加员工逻辑
-    console.log('添加员工')
     setAddDialogOpen(false)
   }
 
   const handleImportEmployees = () => {
-    // TODO: 实现导入员工逻辑
-    console.log('导入员工')
     setImportDialogOpen(false)
   }
 
   const handleDownloadTemplate = () => {
     const template = [
-      ['工号', '姓名', '部门', '职位', '手机号', '邮箱'],
-      ['EMP001', '张三', '技术部', '工程师', '13800138000', 'zhangsan@example.com'],
-      ['EMP002', '李四', '市场部', '经理', '13800138001', 'lisi@example.com'],
+      ['工号', '姓名', '部门', '手机号'],
+      ['EMP001', '张三', '技术部', '13800138000'],
+      ['EMP002', '李四', '市场部', '13800138001'],
     ]
     const csvContent = template.map(row => row.join(',')).join('\n')
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
@@ -105,34 +182,17 @@ export function EmployeesPage() {
     document.body.removeChild(link)
   }
 
-  const handleExportEmployees = () => {
-    const headers = ['工号', '姓名', '部门', '职位', '手机号', '邮箱', '绑定时间', '推广人数', '公众号关注数']
-    const rows = filteredEmployees.map(emp => [
-      emp.employeeNo,
-      emp.name,
-      emp.department,
-      emp.position || '',
-      emp.phone || '',
-      emp.email || '',
-      emp.bindTime || '',
-      emp.promotionCount.toString(),
-      `${getFollowedCount(emp)}/${totalAccounts}`,
-    ])
-    const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n')
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `员工列表_${new Date().toLocaleDateString()}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+  const handleViewDetail = (employee: Employee) => {
+    setSelectedEmployee(employee)
+    setDetailDialogOpen(true)
   }
 
-  const handleViewQrCode = (employee: Employee) => {
-    setSelectedEmployee(employee)
-    setViewQrCodeDialogOpen(true)
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-muted-foreground">加载中...</div>
+      </div>
+    )
   }
 
   return (
@@ -142,15 +202,53 @@ export function EmployeesPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">员工管理</h1>
           <p className="text-muted-foreground">
-            管理已绑定微信的员工信息
+            管理员工信息、绑定状态和推广数据
           </p>
         </div>
         <div className="flex gap-2">
+          <Dialog open={universalBindDialogOpen} onOpenChange={setUniversalBindDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Link2 className="mr-2 h-4 w-4" />
+                通用绑定码
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>通用绑定码</DialogTitle>
+                <DialogDescription>
+                  员工扫码后自助填写信息并完成绑定
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex flex-col items-center py-6">
+                <div className="w-48 h-48 bg-muted rounded-lg flex items-center justify-center mb-4">
+                  <QrCode className="w-24 h-24 text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground text-center">
+                  员工使用微信扫描此二维码<br/>
+                  即可自助绑定并填写个人信息
+                </p>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-4 text-sm">
+                <p className="font-medium mb-2">员工扫码后需填写：</p>
+                <ul className="text-muted-foreground space-y-1">
+                  <li>• 工号</li>
+                  <li>• 姓名</li>
+                  <li>• 部门</li>
+                  <li>• 手机号</li>
+                </ul>
+              </div>
+              <DialogFooter>
+                <Button variant="outline">下载二维码</Button>
+                <Button>复制链接</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">
                 <Upload className="mr-2 h-4 w-4" />
-                导入员工
+                导入
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -161,15 +259,16 @@ export function EmployeesPage() {
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
-                <div className="flex gap-2">
-                  <Button onClick={handleDownloadTemplate} variant="outline">
-                    <Download className="mr-2 h-4 w-4" />
-                    下载模板
-                  </Button>
-                </div>
+                <Button onClick={handleDownloadTemplate} variant="outline" size="sm">
+                  <Download className="mr-2 h-4 w-4" />
+                  下载模板
+                </Button>
                 <div>
                   <Label htmlFor="file">选择文件</Label>
                   <Input id="file" type="file" accept=".csv,.xlsx" />
+                </div>
+                <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground">
+                  <p>模板字段：工号、姓名、部门、手机号</p>
                 </div>
               </div>
               <DialogFooter>
@@ -177,10 +276,6 @@ export function EmployeesPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          <Button onClick={handleExportEmployees} variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            导出员工
-          </Button>
           <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -192,33 +287,29 @@ export function EmployeesPage() {
               <DialogHeader>
                 <DialogTitle>添加员工</DialogTitle>
                 <DialogDescription>
-                  添加新的员工并生成绑定二维码
+                  添加员工后可生成专属绑定二维码
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
-                <div>
-                  <Label htmlFor="employeeNo">工号</Label>
-                  <Input id="employeeNo" placeholder="请输入工号" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="employeeNo">工号 *</Label>
+                    <Input id="employeeNo" placeholder="EMP001" />
+                  </div>
+                  <div>
+                    <Label htmlFor="name">姓名 *</Label>
+                    <Input id="name" placeholder="张三" />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="name">姓名</Label>
-                  <Input id="name" placeholder="请输入姓名" />
-                </div>
-                <div>
-                  <Label htmlFor="department">部门</Label>
-                  <Input id="department" placeholder="请输入部门" />
-                </div>
-                <div>
-                  <Label htmlFor="position">职位</Label>
-                  <Input id="position" placeholder="请输入职位" />
-                </div>
-                <div>
-                  <Label htmlFor="phone">手机号</Label>
-                  <Input id="phone" placeholder="请输入手机号" />
-                </div>
-                <div>
-                  <Label htmlFor="email">邮箱</Label>
-                  <Input id="email" type="email" placeholder="请输入邮箱" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="department">部门 *</Label>
+                    <Input id="department" placeholder="技术部" />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">手机号</Label>
+                    <Input id="phone" placeholder="13800138000" />
+                  </div>
                 </div>
               </div>
               <DialogFooter>
@@ -229,16 +320,55 @@ export function EmployeesPage() {
         </div>
       </div>
 
-      {/* 员工列表卡片 */}
+      {/* 统计卡片 */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">总员工数</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalEmployees}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">已绑定</CardTitle>
+            <UserCheck className="h-4 w-4 text-success" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-success">{boundEmployees}</div>
+            <p className="text-xs text-muted-foreground">
+              绑定率 {totalEmployees > 0 ? ((boundEmployees / totalEmployees) * 100).toFixed(0) : 0}%
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">未绑定</CardTitle>
+            <UserX className="h-4 w-4 text-warning" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-warning">{unboundEmployees}</div>
+            <p className="text-xs text-muted-foreground">
+              待绑定
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 员工列表 */}
       <Card>
         <CardHeader>
           <CardTitle>员工列表</CardTitle>
           <CardDescription>
-            共 {filteredEmployees.length} 名已绑定员工
+            点击展开查看每个公众号的关注和推广详情
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* 搜索和筛选 */}
+          {/* 筛选 */}
           <div className="mb-4 flex gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -257,14 +387,21 @@ export function EmployeesPage() {
               className="border rounded-md px-3 py-2"
             >
               {departments.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
-                </option>
+                <option key={dept} value={dept}>{dept}</option>
               ))}
+            </select>
+            <select
+              value={selectedBindStatus}
+              onChange={(e) => setSelectedBindStatus(e.target.value as 'all' | 'bound' | 'unbound')}
+              className="border rounded-md px-3 py-2"
+            >
+              <option value="all">全部状态</option>
+              <option value="bound">已绑定</option>
+              <option value="unbound">未绑定</option>
             </select>
           </div>
 
-          {/* 员工表格 */}
+          {/* 表格 */}
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -272,134 +409,259 @@ export function EmployeesPage() {
                   <TableHead>工号</TableHead>
                   <TableHead>姓名</TableHead>
                   <TableHead>部门</TableHead>
-                  <TableHead>职位</TableHead>
-                  <TableHead className="text-center">公众号关注数</TableHead>
-                  <TableHead>推广人数</TableHead>
-                  <TableHead>绑定时间</TableHead>
+                  <TableHead className="text-center">绑定状态</TableHead>
+                  <TableHead className="text-center">推广数据</TableHead>
                   <TableHead>操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredEmployees.map((employee) => {
-                  const followedCount = getFollowedCount(employee)
-                  const isExpanded = expandedEmployees.has(employee.id)
-                  
-                  return (
-                    <>
-                      <TableRow key={employee.id}>
-                        <TableCell className="font-medium">{employee.employeeNo}</TableCell>
-                        <TableCell>{employee.name}</TableCell>
-                        <TableCell>{employee.department}</TableCell>
-                        <TableCell>{employee.position || '-'}</TableCell>
-                        <TableCell className="text-center">
-                          <button
-                            onClick={() => toggleEmployeeExpand(employee.id)}
-                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                            style={{
-                              backgroundColor: followedCount === totalAccounts ? '#dcfce7' : followedCount > 0 ? '#fef9c3' : '#f3f4f6',
-                              color: followedCount === totalAccounts ? '#166534' : followedCount > 0 ? '#854d0e' : '#6b7280',
-                            }}
-                          >
-                            <span>{followedCount}/{totalAccounts}</span>
-                            {isExpanded ? (
-                              <ChevronUp className="h-4 w-4" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4" />
-                            )}
-                          </button>
-                        </TableCell>
-                        <TableCell>{employee.promotionCount}</TableCell>
-                        <TableCell>
-                          {employee.bindTime ? new Date(employee.bindTime).toLocaleDateString() : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleViewQrCode(employee)}
+                {filteredEmployees.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                      暂无员工数据，请先添加员工
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredEmployees.map((employee) => {
+                    const isExpanded = expandedEmployees.has(employee.id)
+                    const promotion = getTotalPromotion(employee.id)
+                    
+                    return (
+                      <>
+                        <TableRow key={employee.id} className="cursor-pointer hover:bg-muted/50">
+                          <TableCell className="font-medium">{employee.employeeNo}</TableCell>
+                          <TableCell>{employee.name}</TableCell>
+                          <TableCell>{employee.department}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant={employee.bindStatus === 1 ? 'success' : 'secondary'}>
+                              {employee.bindStatus === 1 ? '已绑定' : '未绑定'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <button
+                              onClick={() => toggleEmployeeExpand(employee.id)}
+                              className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition-colors hover:opacity-80 bg-muted"
                             >
-                              <QrCode className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                      
-                      {/* 展开的公众号详情行 */}
-                      {isExpanded && (
-                        <TableRow key={`${employee.id}-details`} className="bg-muted/30">
-                          <TableCell colSpan={8} className="p-0">
-                            <div className="p-4 pl-8">
-                              <div className="text-sm font-medium text-muted-foreground mb-3">
-                                公众号关注详情
-                              </div>
-                              <div className="grid gap-2">
-                                {wechatAccounts.map(account => {
-                                  const { status, followTime } = getFollowStatusForAccount(employee, account.id)
-                                  
-                                  return (
-                                    <div
-                                      key={account.id}
-                                      className="flex items-center justify-between py-2 px-3 rounded-lg bg-background border"
-                                    >
-                                      <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                                          <Wechat className="w-4 h-4 text-green-600" />
-                                        </div>
-                                        <div>
-                                          <div className="font-medium">{account.name}</div>
-                                          {followTime && (
-                                            <div className="text-xs text-muted-foreground">
-                                              关注时间：{new Date(followTime).toLocaleString()}
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                      <Badge variant={status === '已关注' ? 'default' : 'secondary'}>
-                                        {status === '已关注' ? '✓ 已关注' : '未关注'}
-                                      </Badge>
-                                    </div>
-                                  )
-                                })}
-                              </div>
+                              <span className="text-success font-bold">+{promotion.followCount}</span>
+                              <span className="text-muted-foreground">关注</span>
+                              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </button>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleViewDetail(employee)}
+                              >
+                                详情
+                              </Button>
+                              {employee.bindStatus !== 1 && (
+                                <Button size="sm" variant="outline">
+                                  <QrCode className="h-4 w-4 mr-1" />
+                                  绑定码
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
-                      )}
-                    </>
-                  )
-                })}
+                        
+                        {/* 展开的详情行 */}
+                        {isExpanded && (
+                          <TableRow key={`${employee.id}-details`} className="bg-muted/30">
+                            <TableCell colSpan={6} className="p-0">
+                              <div className="p-4">
+                                <div className="text-sm font-medium text-muted-foreground mb-3">
+                                  每个公众号的推广详情
+                                </div>
+                                <div className="grid gap-3">
+                                  {wechatAccounts.length === 0 ? (
+                                    <div className="text-center text-muted-foreground py-4">
+                                      暂无公众号数据
+                                    </div>
+                                  ) : (
+                                    wechatAccounts.map(account => {
+                                      const promo = getPromotionForAccount(employee.id, account.id)
+                                      
+                                      return (
+                                        <div
+                                          key={account.id}
+                                          className="flex items-center justify-between py-3 px-4 rounded-lg bg-background border"
+                                        >
+                                          <div className="flex items-center gap-4">
+                                            <div 
+                                              className="w-10 h-10 rounded-lg flex items-center justify-center"
+                                              style={{ backgroundColor: account.color }}
+                                            >
+                                              <MessageCircle className="w-5 h-5 text-white" />
+                                            </div>
+                                            <div className="font-medium">{account.account_name}</div>
+                                          </div>
+                                          <div className="flex items-center gap-6">
+                                            <div className="text-center">
+                                              <div className="text-lg font-bold">{promo.scanCount}</div>
+                                              <div className="text-xs text-muted-foreground">扫码</div>
+                                            </div>
+                                            <div className="text-center">
+                                              <div className="text-lg font-bold text-success">+{promo.followCount}</div>
+                                              <div className="text-xs text-muted-foreground">关注</div>
+                                            </div>
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                            >
+                                              <Share2 className="h-4 w-4 mr-1" />
+                                              推广码
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      )
+                                    })
+                                  )}
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </>
+                    )
+                  })
+                )}
               </TableBody>
             </Table>
           </div>
         </CardContent>
       </Card>
 
-      {/* 查看二维码对话框 */}
-      <Dialog open={viewQrCodeDialogOpen} onOpenChange={setViewQrCodeDialogOpen}>
-        <DialogContent>
+      {/* 员工详情弹窗 */}
+      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>员工绑定二维码</DialogTitle>
+            <DialogTitle>员工详情</DialogTitle>
             <DialogDescription>
-              {selectedEmployee?.name}（{selectedEmployee?.employeeNo}）
+              {selectedEmployee?.name}（{selectedEmployee?.employeeNo}）- {selectedEmployee?.department}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col items-center gap-4">
-            {selectedEmployee?.qrCodeUrl ? (
-              <img
-                src={selectedEmployee.qrCodeUrl}
-                alt="绑定二维码"
-                className="w-64 h-64 border rounded-lg"
-              />
-            ) : (
-              <div className="w-64 h-64 border rounded-lg flex items-center justify-center bg-muted">
-                <p className="text-muted-foreground">二维码未生成</p>
-              </div>
-            )}
-            <p className="text-sm text-muted-foreground">
-              请使用微信扫描二维码绑定账号
-            </p>
-          </div>
+          {selectedEmployee && (
+            <Tabs defaultValue="info" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="info">基本信息</TabsTrigger>
+                <TabsTrigger value="follow">关注状态</TabsTrigger>
+                <TabsTrigger value="promotion">推广数据</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="info" className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 pt-4">
+                  <div>
+                    <Label className="text-muted-foreground">工号</Label>
+                    <p className="font-medium">{selectedEmployee.employeeNo}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">姓名</Label>
+                    <p className="font-medium">{selectedEmployee.name}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">部门</Label>
+                    <p className="font-medium">{selectedEmployee.department}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">手机号</Label>
+                    <p className="font-medium">{selectedEmployee.phone || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">绑定状态</Label>
+                    <p className="font-medium">
+                      <Badge variant={selectedEmployee.bindStatus === 1 ? 'success' : 'secondary'}>
+                        {selectedEmployee.bindStatus === 1 ? '已绑定' : '未绑定'}
+                      </Badge>
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground">绑定时间</Label>
+                    <p className="font-medium">
+                      {selectedEmployee.bindTime ? new Date(selectedEmployee.bindTime).toLocaleString() : '-'}
+                    </p>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="follow" className="space-y-4">
+                <div className="pt-4 space-y-3">
+                  {wechatAccounts.map(account => {
+                    return (
+                      <div key={account.id} className="flex items-center justify-between p-3 rounded-lg border">
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-10 h-10 rounded-lg flex items-center justify-center"
+                            style={{ backgroundColor: account.color }}
+                          >
+                            <MessageCircle className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="font-medium">{account.account_name}</div>
+                        </div>
+                        <Badge variant="secondary">
+                          待检测
+                        </Badge>
+                      </div>
+                    )
+                  })}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="promotion" className="space-y-4">
+                <div className="pt-4 space-y-3">
+                  {wechatAccounts.map(account => {
+                    const promo = getPromotionForAccount(selectedEmployee.id, account.id)
+                    
+                    return (
+                      <div key={account.id} className="p-4 rounded-lg border">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-10 h-10 rounded-lg flex items-center justify-center"
+                              style={{ backgroundColor: account.color }}
+                            >
+                              <MessageCircle className="w-5 h-5 text-white" />
+                            </div>
+                            <span className="font-medium">{account.account_name}</span>
+                          </div>
+                          <Button size="sm" variant="outline">
+                            <Share2 className="h-4 w-4 mr-1" />
+                            推广码
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-center">
+                          <div className="p-2 rounded bg-muted">
+                            <div className="text-2xl font-bold">{promo.scanCount}</div>
+                            <div className="text-xs text-muted-foreground">扫码次数</div>
+                          </div>
+                          <div className="p-2 rounded bg-muted">
+                            <div className="text-2xl font-bold text-success">+{promo.followCount}</div>
+                            <div className="text-xs text-muted-foreground">带来关注</div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  
+                  {/* 总计 */}
+                  <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                    <div className="text-sm font-medium text-muted-foreground mb-2">推广总计</div>
+                    <div className="grid grid-cols-2 gap-4 text-center">
+                      <div>
+                        <div className="text-2xl font-bold">{getTotalPromotion(selectedEmployee.id).scanCount}</div>
+                        <div className="text-xs text-muted-foreground">总扫码</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-success">+{getTotalPromotion(selectedEmployee.id).followCount}</div>
+                        <div className="text-xs text-muted-foreground">总关注</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          )}
         </DialogContent>
       </Dialog>
     </div>

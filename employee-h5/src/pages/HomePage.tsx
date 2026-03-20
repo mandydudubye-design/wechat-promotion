@@ -1,36 +1,31 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogoutOutlined, ShareAltOutlined, DownloadOutlined, TrophyOutlined, FileTextOutlined, UserOutlined, QuestionCircleOutlined, AppstoreOutlined } from '@ant-design/icons';
-import { QRCodeSVG } from 'qrcode.react';
-import { mockCurrentEmployee, mockPromotionStats } from '../utils/mockData';
-import { getLocalStorage, removeLocalStorage, copyToClipboard, downloadImage } from '../utils/helpers';
-import type { Employee, PromotionStats } from '../types';
+import { 
+  LogoutOutlined, ShareAltOutlined, DownloadOutlined, 
+  TrophyOutlined, FileTextOutlined, QuestionCircleOutlined, AppstoreOutlined 
+} from '@ant-design/icons';
+import { getLocalStorage, removeLocalStorage } from '../utils/helpers';
+import type { Employee } from '../types';
 import './HomePage.css';
 
 const HomePage = () => {
   const navigate = useNavigate();
   const [employee, setEmployee] = useState<Employee | null>(null);
-  const [stats, setStats] = useState<PromotionStats | null>(null);
+  const [stats] = useState({
+    totalScans: 128,
+    totalFollows: 89,
+    conversionRate: '69.5%',
+    todayScans: 12,
+    todayFollows: 8
+  });
+  const [showQRModal, setShowQRModal] = useState(false);
 
   useEffect(() => {
-    // 检查是否已绑定
-    const isBound = getLocalStorage<boolean>('isBound', false);
-    if (!isBound) {
-      navigate('/bind');
-      return;
-    }
-
-    // 加载员工信息
     const savedEmployee = getLocalStorage<Employee>('employee');
     if (savedEmployee) {
       setEmployee(savedEmployee);
-    } else {
-      setEmployee(mockCurrentEmployee);
     }
-
-    // 加载统计数据
-    setStats(mockPromotionStats);
-  }, [navigate]);
+  }, []);
 
   const handleLogout = () => {
     if (window.confirm('确定要退出登录吗？')) {
@@ -40,43 +35,15 @@ const HomePage = () => {
     }
   };
 
-  const handleShare = async () => {
-    if (!employee) return;
-
-    const shareText = `我是${employee.name}，邀请您关注我们的公众号！\n工号：${employee.employeeId}`;
-    const success = await copyToClipboard(shareText);
-
-    if (success) {
-      alert('推广文案已复制到剪贴板，可以分享给朋友了！');
-    } else {
-      alert('复制失败，请手动复制');
-    }
+  const handleShare = () => {
+    alert('分享功能开发中...');
   };
 
-  const handleDownloadQRCode = () => {
-    if (!employee) return;
-
-    const svgElement = document.getElementById('qrcode');
-    if (svgElement) {
-      const svgData = new XMLSerializer().serializeToString(svgElement);
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx?.drawImage(img, 0, 0);
-
-        const pngUrl = canvas.toDataURL('image/png');
-        downloadImage(pngUrl, `推广码-${employee.name}.png`);
-      };
-
-      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-    }
+  const handleDownload = () => {
+    alert('保存功能开发中...');
   };
 
-  if (!employee || !stats) {
+  if (!employee) {
     return (
       <div className="loading-page">
         <div className="loading-spinner"></div>
@@ -89,99 +56,65 @@ const HomePage = () => {
     <div className="home-page">
       {/* 顶部导航 */}
       <div className="navbar">
-        <div className="navbar-left"></div>
         <div className="navbar-title">我的推广码</div>
         <div className="navbar-right" onClick={handleLogout}>
           <LogoutOutlined />
         </div>
       </div>
 
-      {/* 统计卡片 */}
+      {/* 推广数据统计 */}
       <div className="stats-container">
         <div className="stats-header">
-          <div className="employee-info">
-            <div className="employee-name">{employee.name}</div>
-            <div className="employee-detail">{employee.department} | {employee.employeeId}</div>
-          </div>
+          <span className="stats-title">推广数据</span>
+          <span className="stats-subtitle">累计数据</span>
         </div>
-
         <div className="stats-grid">
           <div className="stat-item">
-            <div className="stat-value">{stats.scanCount}</div>
+            <div className="stat-value">{stats.totalScans}</div>
             <div className="stat-label">累计扫码</div>
           </div>
-          <div className="stat-divider"></div>
           <div className="stat-item">
-            <div className="stat-value">{stats.followCount}</div>
+            <div className="stat-value">{stats.totalFollows}</div>
             <div className="stat-label">累计关注</div>
           </div>
-          <div className="stat-divider"></div>
           <div className="stat-item">
-            <div className="stat-value">{(stats.followCount / stats.scanCount * 100).toFixed(1)}%</div>
+            <div className="stat-value">{stats.conversionRate}</div>
             <div className="stat-label">转化率</div>
           </div>
         </div>
-
-        <div className="stats-footer">
-          <div className="mini-stat">
-            <span className="mini-stat-label">今日扫码</span>
-            <span className="mini-stat-value">{stats.todayScanCount}</span>
-          </div>
-          <div className="mini-stat">
-            <span className="mini-stat-label">今日关注</span>
-            <span className="mini-stat-value">{stats.todayFollowCount}</span>
-          </div>
-          <div className="mini-stat">
-            <span className="mini-stat-label">本月扫码</span>
-            <span className="mini-stat-value">{stats.monthScanCount}</span>
-          </div>
-          <div className="mini-stat">
-            <span className="mini-stat-label">本月关注</span>
-            <span className="mini-stat-value">{stats.monthFollowCount}</span>
-          </div>
+        <div className="stats-divider"></div>
+        <div className="stats-today">
+          <span>今日新增：扫码 <strong>{stats.todayScans}</strong> 次，关注 <strong>{stats.todayFollows}</strong> 人</span>
         </div>
       </div>
 
-      {/* 二维码卡片 */}
-      <div className="qrcode-card">
-        <h3 className="card-title">我的专属推广码</h3>
-        <div className="qrcode-wrapper">
-          <div className="qrcode-box">
-            <QRCodeSVG
-              id="qrcode"
-              value={employee.employeeId}
-              size={240}
-              level="H"
-              includeMargin={true}
-              bgColor="#ffffff"
-              fgColor="#000000"
-            />
-          </div>
-          <p className="qrcode-tip">扫描二维码即可关注公众号</p>
+      {/* 推广二维码 */}
+      <div className="qr-container">
+        <div className="qr-header">
+          <span className="qr-title">我的推广码</span>
+          <span className="qr-tip">点击查看大图</span>
         </div>
-
-        <div className="action-buttons">
-          <button className="action-btn primary" onClick={handleShare}>
-            <ShareAltOutlined />
-            复制推广文案
+        <div className="qr-box" onClick={() => setShowQRModal(true)}>
+          <div className="qr-placeholder">
+            <AppstoreOutlined />
+          </div>
+        </div>
+        <div className="qr-info">
+          <p className="qr-employee">推广人：{employee.name}</p>
+          <p className="qr-dept">{employee.department}</p>
+        </div>
+        <div className="qr-actions">
+          <button className="action-btn share" onClick={handleShare}>
+            <ShareAltOutlined /> 分享
           </button>
-          <button className="action-btn secondary" onClick={handleDownloadQRCode}>
-            <DownloadOutlined />
-            保存二维码
+          <button className="action-btn download" onClick={handleDownload}>
+            <DownloadOutlined /> 保存
           </button>
         </div>
       </div>
 
-      {/* 功能入口 */}
-      <div className="menu-grid">
-        <div className="menu-item" onClick={() => navigate('/multi-account')} style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          border: 'none'
-        }}>
-          <AppstoreOutlined className="menu-icon-custom" style={{ color: 'white' }} />
-          <div className="menu-title" style={{ color: 'white' }}>多公众号管理</div>
-          <div className="menu-desc" style={{ color: 'rgba(255,255,255,0.8)' }}>新功能体验</div>
-        </div>
+      {/* 快捷入口 */}
+      <div className="quick-menu">
         <div className="menu-item" onClick={() => navigate('/ranking')}>
           <TrophyOutlined className="menu-icon-custom" />
           <div className="menu-title">推广榜单</div>
@@ -191,11 +124,6 @@ const HomePage = () => {
           <FileTextOutlined className="menu-icon-custom" />
           <div className="menu-title">推广记录</div>
           <div className="menu-desc">查看明细</div>
-        </div>
-        <div className="menu-item" onClick={() => navigate('/profile')}>
-          <UserOutlined className="menu-icon-custom" />
-          <div className="menu-title">个人中心</div>
-          <div className="menu-desc">我的信息</div>
         </div>
         <div className="menu-item" onClick={() => navigate('/help')}>
           <QuestionCircleOutlined className="menu-icon-custom" />
@@ -207,8 +135,37 @@ const HomePage = () => {
       {/* 底部提示 */}
       <div className="footer-tip">
         <p>让更多人关注我们的公众号</p>
-        <p>一起为组织发展贡献力量！</p>
+        <p>一起为组织发展贡献力量</p>
       </div>
+
+      {/* 二维码弹窗 */}
+      {showQRModal && (
+        <div className="modal-overlay" onClick={() => setShowQRModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>我的推广码</h3>
+              <span className="modal-close" onClick={() => setShowQRModal(false)}>×</span>
+            </div>
+            <div className="modal-body">
+              <div className="qr-large">
+                <AppstoreOutlined />
+              </div>
+              <div className="qr-label">扫码关注公众号</div>
+              <div className="qr-employee-info">
+                推广人：{employee.name} · {employee.department}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="share-btn" onClick={handleShare}>
+                <ShareAltOutlined /> 分享给好友
+              </button>
+              <button className="download-btn" onClick={handleDownload}>
+                <DownloadOutlined /> 保存到相册
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

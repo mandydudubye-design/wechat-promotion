@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
@@ -7,22 +7,51 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Progress } from '../ui/progress'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { Wechat, Users, CheckCircle, XCircle, PieChart as PieChartIcon, BarChart3 } from 'lucide-react'
+import { MessageCircle, Users, CheckCircle, XCircle, PieChart as PieChartIcon, BarChart3 } from 'lucide-react'
 import { mockEmployees, departments } from '../../data/mockData'
 import type { Employee } from '../../types'
 
-// 公众号列表
-const wechatAccounts = [
-  { id: 'acc001', name: '主公众号', color: '#22c55e' },
-  { id: 'acc002', name: '推广号1', color: '#3b82f6' },
-  { id: 'acc003', name: '推广号2', color: '#f59e0b' },
-]
+const API_BASE = 'http://localhost:3001/api'
+
+// 公众号颜色
+const ACCOUNT_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
 
 const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
+
+interface WechatAccount {
+  id: number
+  account_name: string
+  color: string
+}
 
 export function EmployeeFollowStatsPage() {
   const [selectedAccount, setSelectedAccount] = useState<string>('all')
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all')
+  const [wechatAccounts, setWechatAccounts] = useState<WechatAccount[]>([])
+  
+  // 从API获取公众号列表
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        const response = await fetch(`${API_BASE}/accounts`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        const result = await response.json()
+        if (result.code === 200) {
+          const accounts = (result.data || []).map((acc: any, index: number) => ({
+            id: acc.id,
+            account_name: acc.account_name,
+            color: ACCOUNT_COLORS[index % ACCOUNT_COLORS.length]
+          }))
+          setWechatAccounts(accounts)
+        }
+      } catch (error) {
+        console.error('获取公众号列表失败', error)
+      }
+    }
+    fetchAccounts()
+  }, [])
 
   // 只统计已绑定员工
   const boundEmployees = useMemo(() => 
@@ -39,7 +68,7 @@ export function EmployeeFollowStatsPage() {
           return status?.isFollowed
         }
         // 兼容旧数据
-        return account.id === 'acc001' && emp.followStatus === 1
+        return account.id === 1 && emp.followStatus === 1
       })
       return {
         ...account,
@@ -48,11 +77,11 @@ export function EmployeeFollowStatsPage() {
         rate: boundEmployees.length > 0 ? ((followers.length / boundEmployees.length) * 100).toFixed(1) : '0'
       }
     })
-  }, [boundEmployees])
+  }, [boundEmployees, wechatAccounts])
 
   // 按部门统计某公众号的关注情况
   const departmentStats = useMemo(() => {
-    const targetAccount = selectedAccount === 'all' ? null : selectedAccount
+    const targetAccount = selectedAccount === 'all' ? null : parseInt(selectedAccount)
     
     return departments.filter(d => d !== '全部部门').map(dept => {
       const deptEmployees = boundEmployees.filter(emp => emp.department === dept)
@@ -64,7 +93,7 @@ export function EmployeeFollowStatsPage() {
           if (emp.followStatuses) {
             const status = emp.followStatuses.find(s => s.accountId === targetAccount)
             if (status?.isFollowed) followedCount++
-          } else if (targetAccount === 'acc001' && emp.followStatus === 1) {
+          } else if (targetAccount === 1 && emp.followStatus === 1) {
             followedCount++
           }
         } else {
@@ -94,7 +123,7 @@ export function EmployeeFollowStatsPage() {
     const notFollowed: Employee[] = []
     
     boundEmployees.forEach(emp => {
-      if (emp.followStatuses) {
+      if (emp.followStatuses && wechatAccounts.length > 0) {
         const followedCount = emp.followStatuses.filter(s => s.isFollowed).length
         if (followedCount === wechatAccounts.length) {
           allFollowed.push(emp)
@@ -114,7 +143,7 @@ export function EmployeeFollowStatsPage() {
     })
     
     return { allFollowed, partialFollowed, notFollowed }
-  }, [boundEmployees])
+  }, [boundEmployees, wechatAccounts])
 
   // 饼图数据
   const pieData = [
@@ -125,7 +154,7 @@ export function EmployeeFollowStatsPage() {
 
   // 柱状图数据
   const barData = accountStats.map(acc => ({
-    name: acc.name,
+    name: acc.account_name,
     关注人数: acc.followCount,
     未关注: acc.totalCount - acc.followCount,
   }))
@@ -171,19 +200,19 @@ export function EmployeeFollowStatsPage() {
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{employeeCategories.allFollowed.length}</div>
             <p className="text-xs text-muted-foreground">
-              占比 {((employeeCategories.allFollowed.length / boundEmployees.length) * 100).toFixed(1)}%
+              占比 {boundEmployees.length > 0 ? ((employeeCategories.allFollowed.length / boundEmployees.length) * 100).toFixed(1) : 0}%
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">部分关注</CardTitle>
-            <Wechat className="h-4 w-4 text-yellow-500" />
+            <MessageCircle className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">{employeeCategories.partialFollowed.length}</div>
             <p className="text-xs text-muted-foreground">
-              占比 {((employeeCategories.partialFollowed.length / boundEmployees.length) * 100).toFixed(1)}%
+              占比 {boundEmployees.length > 0 ? ((employeeCategories.partialFollowed.length / boundEmployees.length) * 100).toFixed(1) : 0}%
             </p>
           </CardContent>
         </Card>
@@ -195,7 +224,7 @@ export function EmployeeFollowStatsPage() {
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{employeeCategories.notFollowed.length}</div>
             <p className="text-xs text-muted-foreground">
-              占比 {((employeeCategories.notFollowed.length / boundEmployees.length) * 100).toFixed(1)}%
+              占比 {boundEmployees.length > 0 ? ((employeeCategories.notFollowed.length / boundEmployees.length) * 100).toFixed(1) : 0}%
             </p>
           </CardContent>
         </Card>
@@ -281,10 +310,10 @@ export function EmployeeFollowStatsPage() {
                     className="w-10 h-10 rounded-full flex items-center justify-center"
                     style={{ backgroundColor: `${account.color}20` }}
                   >
-                    <Wechat className="w-5 h-5" style={{ color: account.color }} />
+                    <MessageCircle className="w-5 h-5" style={{ color: account.color }} />
                   </div>
                   <div>
-                    <div className="font-medium">{account.name}</div>
+                    <div className="font-medium">{account.account_name}</div>
                     <div className="text-sm text-muted-foreground">
                       {account.followCount}/{account.totalCount} 人关注
                     </div>
@@ -315,7 +344,7 @@ export function EmployeeFollowStatsPage() {
               <SelectContent>
                 <SelectItem value="all">全部公众号</SelectItem>
                 {wechatAccounts.map(acc => (
-                  <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
+                  <SelectItem key={acc.id} value={String(acc.id)}>{acc.account_name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -409,7 +438,7 @@ function EmployeeTable({
   showStatus = false 
 }: { 
   employees: Employee[]
-  wechatAccounts: { id: string; name: string; color: string }[]
+  wechatAccounts: WechatAccount[]
   showStatus?: boolean
 }) {
   if (employees.length === 0) {
@@ -450,7 +479,7 @@ function EmployeeTable({
                         className="text-xs"
                         style={isFollowed ? { backgroundColor: acc.color } : {}}
                       >
-                        {acc.name.slice(0, 2)}
+                        {acc.account_name.slice(0, 2)}
                       </Badge>
                     )
                   })}

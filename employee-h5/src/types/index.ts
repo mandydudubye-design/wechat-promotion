@@ -23,11 +23,21 @@ export interface PromotionStats {
   monthFollowCount: number;
 }
 
+// 公众号信息
+export interface OfficialAccount {
+  id: string;
+  name: string;
+  avatar?: string;
+}
+
 // 推广记录
 export interface PromotionRecord {
   id: string;
   employeeId: string;
   employeeName: string;
+  accountId: string; // 公众号ID
+  accountName: string; // 公众号名称
+  accountAvatar?: string; // 公众号头像
   scanTime: string;
   isFollowed: boolean;
   followTime?: string;
