@@ -10,11 +10,17 @@ import { SettingsPage } from './components/pages/SettingsPage'
 import { AccountsPage } from './components/pages/AccountsPage'
 
 function App() {
-  // TODO: Add real authentication check
-  const isAuthenticated = true // For demo, always authenticated
+  // 检查是否有 token
+  const token = localStorage.getItem('token')
+  const isAuthenticated = !!token
 
   if (!isAuthenticated) {
-    return <LoginPage />
+    return (
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    )
   }
 
   return (

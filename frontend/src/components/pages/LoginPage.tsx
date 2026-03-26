@@ -3,8 +3,9 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Lock, User, Eye, EyeOff } from 'lucide-react'
+import { Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { login } from '../../lib/api'
 
 export function LoginPage() {
   const [username, setUsername] = useState('')
@@ -25,12 +26,17 @@ export function LoginPage() {
 
     setLoading(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Demo: accept any login
-    setLoading(false)
-    navigate('/')
+    try {
+      const result = await login({ username, password })
+      // 存储 token
+      localStorage.setItem('token', result.token)
+      localStorage.setItem('user', JSON.stringify(result.user))
+      navigate('/')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '登录失败，请检查用户名和密码')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -79,8 +85,8 @@ export function LoginPage() {
                   placeholder="请输入用户名"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="pl-9"
-                  autoComplete="username"
+                  className="pl-10"
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -96,52 +102,37 @@ export function LoginPage() {
                   placeholder="请输入密码"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-9 pr-9"
-                  autoComplete="current-password"
+                  className="pl-10 pr-10"
+                  disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
-            {/* Remember me */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" className="h-4 w-4 rounded border-input" />
-                <span className="text-muted-foreground">记住我</span>
-              </label>
-              <a href="#" className="text-sm text-primary hover:underline">
-                忘记密码？
-              </a>
-            </div>
-
-            {/* Submit */}
-            <Button type="submit" className="w-full" size="lg" disabled={loading}>
-              {loading ? '登录中...' : '登录'}
+            {/* Submit Button */}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  登录中...
+                </>
+              ) : (
+                '登录'
+              )}
             </Button>
-          </form>
 
-          {/* Demo hint */}
-          <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 p-3 text-center text-sm">
-            <p className="text-muted-foreground">
-              演示账号：任意输入即可登录
+            {/* Demo hint */}
+            <p className="text-center text-xs text-muted-foreground">
+              默认账号: admin / admin123
             </p>
-          </div>
+          </form>
         </CardContent>
-
-        {/* Footer */}
-        <div className="border-t px-6 py-4 text-center text-xs text-muted-foreground">
-          <p>© 2026 公众号推广追踪系统. All rights reserved.</p>
-        </div>
       </Card>
     </div>
   )
