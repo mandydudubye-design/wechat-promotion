@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -15,98 +15,136 @@ import {
   CheckCircle,
   XCircle,
   Copy,
-  Save
+  Save,
+  Loader2
 } from 'lucide-react'
-
-interface Account {
-  id: string
-  accountName: string
-  appId: string
-  avatar: string
-  description: string
-  status: 'active' | 'inactive'
-  createdAt: string
-}
-
-const mockAccounts: Account[] = [
-  {
-    id: 'acct_001',
-    accountName: '企业服务号',
-    appId: 'wx1234567890abcdef',
-    avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=ES',
-    description: '企业官方服务号',
-    status: 'active',
-    createdAt: '2026-01-15'
-  },
-  {
-    id: 'acct_002',
-    accountName: '产品动态号',
-    appId: 'wx0987654321fedcba',
-    avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=PD',
-    description: '产品更新推送',
-    status: 'active',
-    createdAt: '2026-02-01'
-  },
-  {
-    id: 'acct_003',
-    accountName: '活动推广号',
-    appId: 'wxabcdef1234567890',
-    avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=AP',
-    description: '营销活动专用',
-    status: 'inactive',
-    createdAt: '2026-02-20'
-  }
-]
+import { 
+  getAccounts, 
+  createAccount, 
+  updateAccount, 
+  deleteAccount, 
+  disableAccount, 
+  enableAccount,
+  type WechatAccount 
+} from '../../lib/api'
 
 export function AccountsPage() {
-  const [accounts, setAccounts] = useState<Account[]>(mockAccounts)
+  const [accounts, setAccounts] = useState<WechatAccount[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null)
+  const [selectedAccount, setSelectedAccount] = useState<WechatAccount | null>(null)
+  const [saving, setSaving] = useState(false)
+  
   const [newAccount, setNewAccount] = useState({
-    accountName: '',
-    appId: '',
-    appSecret: '',
-    description: ''
+    account_name: '',
+    account_id: '',
+    app_id: '',
+    app_secret: '',
   })
 
-  const handleAdd = () => {
-    const account: Account = {
-      id: `acct_${Date.now()}`,
-      accountName: newAccount.accountName,
-      appId: newAccount.appId,
-      avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${newAccount.accountName}`,
-      description: newAccount.description,
-      status: 'active',
-      createdAt: new Date().toISOString().split('T')[0]
+  // 获取公众号列表
+  const fetchAccounts = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await getAccounts()
+      setAccounts(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '获取公众号列表失败')
+    } finally {
+      setLoading(false)
     }
-    setAccounts([...accounts, account])
-    setIsAddDialogOpen(false)
-    setNewAccount({ accountName: '', appId: '', appSecret: '', description: '' })
   }
 
-  const handleEdit = (account: Account) => {
+  useEffect(() => {
+    fetchAccounts()
+  }, [])
+
+  // 添加公众号
+  const handleAdd = async () => {
+    if (!newAccount.account_name || !newAccount.account_id) {
+      alert('请填写公众号名称和账号ID')
+      return
+    }
+
+    setSaving(true)
+    try {
+      await createAccount({
+        account_name: newAccount.account_name,
+        account_id: newAccount.account_id,
+        app_id: newAccount.app_id || undefined,
+        app_secret: newAccount.app_secret || undefined,
+      })
+      setIsAddDialogOpen(false)
+      setNewAccount({ account_name: '', account_id: '', app_id: '', app_secret: '' })
+      fetchAccounts()
+      alert('添加成功！')
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '添加失败')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // 编辑公众号
+  const handleEdit = (account: WechatAccount) => {
     setSelectedAccount(account)
     setIsEditDialogOpen(true)
   }
 
-  const handleDelete = (accountId: string) => {
-    if (confirm('确定要删除这个公众号吗？')) {
-      setAccounts(accounts.filter(acc => acc.id !== accountId))
+  // 保存编辑
+  const handleSaveEdit = async () => {
+    if (!selectedAccount) return
+    
+    setSaving(true)
+    try {
+      await updateAccount(selectedAccount.id, {
+        account_name: selectedAccount.account_name,
+        app_id: selectedAccount.app_id || undefined,
+      })
+      setIsEditDialogOpen(false)
+      fetchAccounts()
+      alert('保存成功！')
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '保存失败')
+    } finally {
+      setSaving(false)
     }
   }
 
-  const handleToggleStatus = (accountId: string) => {
-    setAccounts(accounts.map(acc => 
-      acc.id === accountId 
-        ? { ...acc, status: acc.status === 'active' ? 'inactive' : 'active' }
-        : acc
-    ))
+  // 删除公众号
+  const handleDelete = async (accountDbId: number, accountName: string) => {
+    if (!confirm(`确定要删除公众号"${accountName}"吗？`)) return
+    
+    try {
+      await deleteAccount(accountDbId)
+      fetchAccounts()
+      alert('删除成功！')
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '删除失败')
+    }
+  }
+
+  // 切换状态
+  const handleToggleStatus = async (account: WechatAccount) => {
+    try {
+      if (account.status === 1) {
+        await disableAccount(account.id)
+      } else {
+        await enableAccount(account.id)
+      }
+      fetchAccounts()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '操作失败')
+    }
   }
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
-    // TODO: Show toast notification
+    alert('已复制到剪贴板')
   }
 
   return (
@@ -135,12 +173,21 @@ export function AccountsPage() {
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="accountName">公众号名称</Label>
+                <Label htmlFor="accountName">公众号名称 *</Label>
                 <Input
                   id="accountName"
                   placeholder="企业服务号"
-                  value={newAccount.accountName}
-                  onChange={(e) => setNewAccount({ ...newAccount, accountName: e.target.value })}
+                  value={newAccount.account_name}
+                  onChange={(e) => setNewAccount({ ...newAccount, account_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="accountId">公众号ID *</Label>
+                <Input
+                  id="accountId"
+                  placeholder="gh_xxxxxx"
+                  value={newAccount.account_id}
+                  onChange={(e) => setNewAccount({ ...newAccount, account_id: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -148,8 +195,8 @@ export function AccountsPage() {
                 <Input
                   id="appId"
                   placeholder="wx1234567890abcdef"
-                  value={newAccount.appId}
-                  onChange={(e) => setNewAccount({ ...newAccount, appId: e.target.value })}
+                  value={newAccount.app_id}
+                  onChange={(e) => setNewAccount({ ...newAccount, app_id: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -158,17 +205,8 @@ export function AccountsPage() {
                   id="appSecret"
                   type="password"
                   placeholder="••••••••••••••••"
-                  value={newAccount.appSecret}
-                  onChange={(e) => setNewAccount({ ...newAccount, appSecret: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">描述</Label>
-                <Input
-                  id="description"
-                  placeholder="企业官方服务号"
-                  value={newAccount.description}
-                  onChange={(e) => setNewAccount({ ...newAccount, description: e.target.value })}
+                  value={newAccount.app_secret}
+                  onChange={(e) => setNewAccount({ ...newAccount, app_secret: e.target.value })}
                 />
               </div>
             </div>
@@ -176,8 +214,8 @@ export function AccountsPage() {
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                 取消
               </Button>
-              <Button onClick={handleAdd}>
-                <Save className="mr-2 h-4 w-4" />
+              <Button onClick={handleAdd} disabled={saving}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 添加
               </Button>
             </div>
@@ -203,11 +241,11 @@ export function AccountsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">活跃公众号</CardTitle>
-            <CheckCircle className="h-4 w-4 text-success" />
+            <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {accounts.filter(a => a.status === 'active').length}
+              {accounts.filter(a => a.status === 1).length}
             </div>
             <p className="text-xs text-muted-foreground">
               当前可推广
@@ -217,13 +255,15 @@ export function AccountsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">推广员工数</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">已停用</CardTitle>
+            <XCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">156</div>
+            <div className="text-2xl font-bold">
+              {accounts.filter(a => a.status !== 1).length}
+            </div>
             <p className="text-xs text-muted-foreground">
-              总员工数
+              停用状态
             </p>
           </CardContent>
         </Card>
@@ -234,95 +274,117 @@ export function AccountsPage() {
             <QrCode className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12,345</div>
+            <div className="text-2xl font-bold">
+              {accounts.reduce((sum, a) => sum + (a.qr_code_url ? 1 : 0), 0)}
+            </div>
             <p className="text-xs text-muted-foreground">
-              累计扫码
+              已配置二维码
             </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
+          {error}
+        </div>
+      )}
 
       {/* Accounts List */}
       <Card>
         <CardHeader>
           <CardTitle>公众号列表</CardTitle>
           <CardDescription>
-            管理和配置所有微信公众号
+            {loading ? '加载中...' : `共 ${accounts.length} 个公众号`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {accounts.map((account) => (
-              <div
-                key={account.id}
-                className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <img
-                    src={account.avatar}
-                    alt={account.accountName}
-                    className="h-12 w-12 rounded-lg"
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{account.accountName}</h3>
-                      <Badge variant={account.status === 'active' ? 'success' : 'secondary'}>
-                        {account.status === 'active' ? '活跃' : '停用'}
-                      </Badge>
+          {loading ? (
+            <div className="text-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+              <p className="mt-2 text-muted-foreground">加载中...</p>
+            </div>
+          ) : accounts.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              暂无公众号数据，点击上方按钮添加
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {accounts.map((account) => (
+                <div
+                  key={account.id}
+                  className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                      {account.account_name.charAt(0)}
                     </div>
-                    <p className="text-sm text-muted-foreground">{account.description}</p>
-                    <div className="flex items-center gap-4 mt-1">
-                      <span className="text-xs text-muted-foreground">
-                        AppID: {account.appId}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 px-2"
-                        onClick={() => copyToClipboard(account.appId)}
-                      >
-                        <Copy className="h-3 w-3" />
-                      </Button>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{account.account_name}</h3>
+                        <Badge variant={account.status === 1 ? 'success' : 'secondary'}>
+                          {account.status === 1 ? '活跃' : '停用'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        账号ID: {account.account_id}
+                      </p>
+                      {account.app_id && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-muted-foreground">
+                            AppID: {account.app_id}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 px-1"
+                            onClick={() => copyToClipboard(account.app_id!)}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleToggleStatus(account.id)}
-                  >
-                    {account.status === 'active' ? (
-                      <>
-                        <XCircle className="mr-2 h-4 w-4" />
-                        停用
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        启用
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(account)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(account.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleStatus(account)}
+                    >
+                      {account.status === 1 ? (
+                        <>
+                          <XCircle className="mr-2 h-4 w-4" />
+                          停用
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          启用
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(account)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(account.id, account.account_name)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -341,21 +403,16 @@ export function AccountsPage() {
                 <Label htmlFor="edit-accountName">公众号名称</Label>
                 <Input
                   id="edit-accountName"
-                  defaultValue={selectedAccount.accountName}
+                  value={selectedAccount.account_name}
+                  onChange={(e) => setSelectedAccount({ ...selectedAccount, account_name: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-appId">AppID</Label>
                 <Input
                   id="edit-appId"
-                  defaultValue={selectedAccount.appId}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-description">描述</Label>
-                <Input
-                  id="edit-description"
-                  defaultValue={selectedAccount.description}
+                  value={selectedAccount.app_id || ''}
+                  onChange={(e) => setSelectedAccount({ ...selectedAccount, app_id: e.target.value })}
                 />
               </div>
             </div>
@@ -364,8 +421,8 @@ export function AccountsPage() {
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               取消
             </Button>
-            <Button>
-              <Save className="mr-2 h-4 w-4" />
+            <Button onClick={handleSaveEdit} disabled={saving}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               保存
             </Button>
           </div>
