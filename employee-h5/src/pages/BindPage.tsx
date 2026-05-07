@@ -374,7 +374,7 @@ const BindPage = () => {
       </div>
 
       {/* 开发模式：长按显示调试信息 */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.DEV && (
         <div 
           className="debug-trigger"
           onContextMenu={e => {
