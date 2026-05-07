@@ -143,7 +143,7 @@ const BindPage = () => {
       });
       const result = await res.json();
       if (result.code === 200) {
-        setLocalStorage('employee', { employeeId: formData.employeeId, ...formData });
+        setLocalStorage('employee', { ...formData });
         setLocalStorage('isBound', true);
         setSuccessInfo({ name: formData.name, department: formData.department });
         setBindSuccess(true);
