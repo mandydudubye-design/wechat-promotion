@@ -53,13 +53,21 @@ export interface FollowRecord {
 export interface OfficialAccount {
   id: string
   name: string
+  wechatId?: string        // 微信号（公众号ID，如 gh_xxxxxx）
   avatar?: string
   appId: string
+  appSecret?: string
+  accountType: 'subscription' | 'service'  // 订阅号 | 服务号
+  verified: boolean        // 是否已认证
+  qrCodeUrl?: string       // 公众号二维码图片
   totalFollowers: number
   employeeFollowers: number // 员工关注数
   todayNewFollows: number
   monthNewFollows: number
-  status: 0 | 1 // 0-已停用 1-正常
+  status: 0 | 1            // 0-已停用 1-正常
+  // 推广模式（根据类型+认证状态自动决定）
+  // 服务号 or 已认证订阅号 → 带参数二维码（扫码即记录）
+  // 未认证订阅号 → 验证码模式
 }
 
 export interface EmployeeFollowStats {

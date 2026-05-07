@@ -1,0 +1,300 @@
+.promotion-landing-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.landing-container {
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.loading,
+.error {
+  padding: 60px 20px;
+  text-align: center;
+  color: #666;
+  font-size: 16px;
+}
+
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+/* 员工信息卡片 */
+.employee-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.employee-avatar {
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.employee-info h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.employee-info p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* 公众号信息卡片 */
+.account-card {
+  padding: 24px 20px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.account-avatar {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 15px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.account-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.account-card h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  color: #333;
+  font-weight: 600;
+}
+
+.account-description {
+  margin: 0 0 15px;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.account-tags {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tag.verified {
+  background: #e6f4ea;
+  color: #1e8e3e;
+}
+
+.tag.unverified {
+  background: #f8f9fa;
+  color: #666;
+}
+
+.tag.type {
+  background: #e8f0fe;
+  color: #1a73e8;
+}
+
+/* 关注引导区域 */
+.guide-section {
+  padding: 24px 20px;
+}
+
+.guide-title {
+  text-align: center;
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.qr-code-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.qr-code-image {
+  width: 200px;
+  height: 200px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 10px;
+  background: white;
+}
+
+.wechat-id-container {
+  text-align: center;
+  padding: 24px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.wechat-id-label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.wechat-id-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+  user-select: all;
+}
+
+.wechat-id-tip {
+  font-size: 13px;
+  color: #999;
+}
+
+.no-qr-code {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  font-size: 14px;
+}
+
+/* 操作步骤 */
+.guide-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.step-number {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.step span:last-child {
+  font-size: 14px;
+  color: #333;
+}
+
+/* 底部 */
+.footer {
+  padding: 20px;
+  text-align: center;
+  background: #f8f9fa;
+  border-top: 1px solid #f0f0f0;
+}
+
+.footer p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+/* 推广码展示区域 */
+.promo-code-section {
+  margin-top: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 12px;
+  text-align: center;
+  border: 2px dashed #ff9800;
+}
+
+.promo-code-label {
+  font-size: 13px;
+  color: #e65100;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.promo-code-value {
+  font-size: 32px;
+  font-weight: bold;
+  color: #e65100;
+  letter-spacing: 4px;
+  font-family: 'Courier New', monospace;
+  user-select: all;
+  margin-bottom: 8px;
+}
+
+.promo-code-tip {
+  font-size: 12px;
+  color: #bf360c;
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
+/* 高亮步骤 */
+.step.highlight-step {
+  background: #fff3e0;
+  border: 1px solid #ffcc80;
+}
+
+.step.highlight-step .step-number {
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+}
+
+/* 响应式 */
+@media (max-width: 480px) {
+  .promotion-landing-page {
+    padding: 10px;
+  }
+  
+  .landing-container {
+    border-radius: 0;
+  }
+  
+  .qr-code-image {
+    width: 180px;
+    height: 180px;
+  }
+}

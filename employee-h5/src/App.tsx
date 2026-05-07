@@ -10,6 +10,7 @@ import RankingPage from './pages/RankingPage';
 import RecordsPage from './pages/RecordsPage';
 import ProfilePage from './pages/ProfilePage';
 import HelpPage from './pages/HelpPage';
+import PromotionLandingPage from './pages/PromotionLandingPage';
 import './index.css';
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
           <Route path="/records" element={<RecordsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/help" element={<HelpPage />} />
+          <Route path="/landing" element={<PromotionLandingPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>

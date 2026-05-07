@@ -21,6 +21,8 @@ const HomePage = () => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [loadingQrCode, setLoadingQrCode] = useState(false);
 
   useEffect(() => {
     // 检查是否已绑定
@@ -41,16 +43,93 @@ const HomePage = () => {
     // 加载统计数据
     setStats(mockPromotionStats);
 
-    // 加载公众号列表
-    setAccounts(mockOfficialAccounts);
-
-    // 加载主推公众号
-    const primary = mockOfficialAccounts.find(acc => acc.isPrimary);
-    if (primary) {
-      setPrimaryAccount(primary);
-      setSelectedAccount(primary);
-    }
+    // 从后端 API 加载公众号列表（会自动设置 selectedAccount）
+    fetchAccounts();
   }, [navigate]);
+
+  // （生成推广码由 fetchAccounts 和 handleAccountSelect 主动调用，不依赖 useEffect）
+
+  // 从后端获取公众号列表
+  const fetchAccounts = async () => {
+    // 同时读取本地员工数据（不依赖 state 异步更新）
+    const savedEmployee = getLocalStorage<Employee>('employee') || mockCurrentEmployee;
+
+    try {
+      const response = await fetch('http://localhost:3000/api/employee-binding/accounts');
+      const result = await response.json();
+
+      if (result.code === 200 && result.data.length > 0) {
+        setAccounts(result.data);
+        const firstAccount = result.data[0];
+        setPrimaryAccount(firstAccount);
+        setSelectedAccount(firstAccount);
+
+        // 直接用拿到的数据生成推广码，不等 state 更新
+        generatePromotionCode(savedEmployee, firstAccount);
+      } else {
+        // 如果没有数据，使用 mock 数据（兼容旧数据）
+        setAccounts(mockOfficialAccounts);
+        const primary = mockOfficialAccounts.find(acc => acc.isPrimary) || mockOfficialAccounts[0];
+        if (primary) {
+          setPrimaryAccount(primary);
+          setSelectedAccount(primary);
+          generatePromotionCode(savedEmployee, primary);
+        }
+      }
+    } catch (error) {
+      console.error('获取公众号列表失败:', error);
+      // 失败时使用 mock 数据
+      setAccounts(mockOfficialAccounts);
+      const primary = mockOfficialAccounts.find(acc => acc.isPrimary) || mockOfficialAccounts[0];
+      if (primary) {
+        setPrimaryAccount(primary);
+        setSelectedAccount(primary);
+        generatePromotionCode(savedEmployee, primary);
+      }
+    }
+  };
+
+  // 生成专属推广码
+  const generatePromotionCode = async (emp?: typeof employee, acc?: typeof selectedAccount) => {
+    const curEmployee = emp || employee;
+    const curAccount = acc || selectedAccount;
+    if (!curEmployee || !curAccount) return;
+
+    // 确保 accountId 为数字
+    const accountId = typeof curAccount.id === 'string' ? parseInt(curAccount.id, 10) : curAccount.id;
+    if (!accountId || isNaN(accountId)) {
+      console.error('无效的公众号ID:', curAccount.id);
+      return;
+    }
+
+    setLoadingQrCode(true);
+    try {
+      const response = await fetch('http://localhost:3000/api/smart-promotion/employee-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeId: curEmployee.employeeId,
+          employeeName: curEmployee.name,
+          accountId: accountId
+        })
+      });
+
+      const result = await response.json();
+      console.log('推广码生成结果:', result);
+
+      if (result.code === 200 && result.data?.qrCodeUrl) {
+        setQrCodeUrl(result.data.qrCodeUrl);
+      } else {
+        console.error('推广码生成失败:', result);
+        showToast(result.message || '生成推广码失败', 'error');
+      }
+    } catch (error) {
+      console.error('请求推广码失败:', error);
+      showToast('网络错误，无法连接到后端', 'error');
+    } finally {
+      setLoadingQrCode(false);
+    }
+  };
 
   const handleLogout = () => {
     setShowLogoutConfirm(true);
@@ -232,6 +311,9 @@ const HomePage = () => {
                       onClick={() => {
                         setSelectedAccount(account);
                         setShowAccountSelector(false);
+                        // 切换公众号后重新生成推广码
+                        const savedEmployee = getLocalStorage<Employee>('employee') || mockCurrentEmployee;
+                        generatePromotionCode(savedEmployee, account);
                       }}
                     >
                       <span className="account-name">{account.name}</span>
@@ -254,15 +336,25 @@ const HomePage = () => {
           <>
             <div className="qrcode-wrapper">
               <div className="qrcode-box">
-                <QRCodeSVG
-                  id="qrcode"
-                  value={`${selectedAccount.id}_${employee?.employeeId}`}
-                  size={200}
-                  level="H"
-                  includeMargin={true}
-                  bgColor="#ffffff"
-                  fgColor="#000000"
-                />
+                {loadingQrCode ? (
+                  <div className="loading-qrcode">生成中...</div>
+                ) : qrCodeUrl ? (
+                  <img
+                    id="qrcode"
+                    src={qrCodeUrl}
+                    alt="专属推广码"
+                    className="qrcode-image"
+                  />
+                ) : (
+                  <QRCodeSVG
+                    id="qrcode"
+                    value={`${selectedAccount.id}_${employee?.employeeId}`}
+                    size={200}
+                    level="H"
+                    includeMargin={true}
+                    bgColor="#ffffff"
+                  />
+                )}
               </div>
               <p className="qrcode-tip">扫描二维码即可关注公众号</p>
               {selectedAccount.description && (

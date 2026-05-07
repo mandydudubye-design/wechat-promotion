@@ -68,17 +68,17 @@ export function ReportsPage() {
   // 计算趋势数据（按日期分组）
   const trendData = (() => {
     const dateMap = new Map<string, { subscribe: number; unsubscribe: number; net: number }>()
-    
+
     // 从关注记录中统计
-    followRecords.forEach(record => {
-      const date = record.subscribe_time 
+    (followRecords || []).forEach(record => {
+      const date = record.subscribe_time
         ? new Date(record.subscribe_time).toLocaleDateString()
-        : new Date(record.created_at).toLocaleDateString()
-      
+        : new Date(record.created_at || '').toLocaleDateString()
+
       if (!dateMap.has(date)) {
         dateMap.set(date, { subscribe: 0, unsubscribe: 0, net: 0 })
       }
-      
+
       const data = dateMap.get(date)!
       if (record.status === 1) {
         data.subscribe++
@@ -88,7 +88,7 @@ export function ReportsPage() {
         data.net--
       }
     })
-    
+
     return Array.from(dateMap.entries())
       .map(([date, data]) => ({ date, ...data }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -96,10 +96,14 @@ export function ReportsPage() {
   })()
 
   // 部门数据
-  const departments = [...new Set(employees.map(e => e.department).filter(Boolean) as string[])]
-  
+  const departments = [...new Set(
+    (employees || [])
+      .map(e => e.department)
+      .filter((dept): dept is string => Boolean(dept))
+  )]
+
   const departmentData = departments.map((dept) => {
-    const deptEmployees = employees.filter(e => e.department === dept)
+    const deptEmployees = (employees || []).filter(e => e.department === dept)
     const deptPromotions = promotions.filter(p => {
       const emp = employees.find(e => e.employee_id === p.employee_id)
       return emp?.department === dept

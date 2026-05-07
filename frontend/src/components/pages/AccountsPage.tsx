@@ -5,12 +5,13 @@ import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Badge } from '../ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog'
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Settings, 
-  Users, 
+import { Select } from '../ui/select'
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Settings,
+  Users,
   QrCode,
   CheckCircle,
   XCircle,
@@ -41,6 +42,7 @@ export function AccountsPage() {
   const [newAccount, setNewAccount] = useState({
     account_name: '',
     account_id: '',
+    account_type: 'subscription',
     app_id: '',
     app_secret: '',
   })
@@ -75,11 +77,12 @@ export function AccountsPage() {
       await createAccount({
         account_name: newAccount.account_name,
         account_id: newAccount.account_id,
+        account_type: newAccount.account_type,
         app_id: newAccount.app_id || undefined,
         app_secret: newAccount.app_secret || undefined,
       })
       setIsAddDialogOpen(false)
-      setNewAccount({ account_name: '', account_id: '', app_id: '', app_secret: '' })
+      setNewAccount({ account_name: '', account_id: '', account_type: 'subscription', app_id: '', app_secret: '' })
       fetchAccounts()
       alert('添加成功！')
     } catch (err) {
@@ -189,6 +192,21 @@ export function AccountsPage() {
                   value={newAccount.account_id}
                   onChange={(e) => setNewAccount({ ...newAccount, account_id: e.target.value })}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="accountType">公众号类型 *</Label>
+                <Select
+                  id="accountType"
+                  value={newAccount.account_type}
+                  onChange={(e) => setNewAccount({ ...newAccount, account_type: e.target.value as 'subscription' | 'service' })}
+                >
+                  <option value="">选择公众号类型</option>
+                  <option value="subscription">订阅号</option>
+                  <option value="service">服务号</option>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {newAccount.account_type === 'service' ? '支持H5网页授权，用户体验更佳' : '通过识别码验证员工身份'}
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="appId">AppID</Label>
@@ -406,6 +424,18 @@ export function AccountsPage() {
                   value={selectedAccount.account_name}
                   onChange={(e) => setSelectedAccount({ ...selectedAccount, account_name: e.target.value })}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-accountType">公众号类型</Label>
+                <Select
+                  id="edit-accountType"
+                  value={selectedAccount.account_type || 'subscription'}
+                  onChange={(e) => setSelectedAccount({ ...selectedAccount, account_type: e.target.value as 'subscription' | 'service' })}
+                >
+                  <option value="">选择公众号类型</option>
+                  <option value="subscription">订阅号</option>
+                  <option value="service">服务号</option>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-appId">AppID</Label>

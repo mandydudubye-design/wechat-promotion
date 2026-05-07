@@ -4,6 +4,48 @@ import { pool } from '../config/database';
 const router = Router();
 
 /**
+ * H5 端获取公众号列表（无需认证）
+ * GET /api/employee-info/accounts
+ */
+router.get('/accounts', async (req: Request, res: Response) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT id, account_name, wechat_id, account_type, verified, qr_code_url, avatar, description FROM wechat_account_configs WHERE status = 1 ORDER BY created_at DESC'
+    );
+
+    // 转换为 H5 端需要的格式
+    const accounts = (rows as any[]).map((acc: any) => ({
+      id: acc.id.toString(),
+      name: acc.account_name,
+      wechatId: acc.wechat_id,
+      appId: '', // 不返回敏感信息
+      appSecret: '',
+      accountType: acc.account_type === 'service' ? 'service' : 'subscription',
+      verified: acc.verified === 1,
+      qrCodeUrl: acc.qr_code_url || '',
+      avatar: acc.avatar || '',
+      totalFollowers: 0, // 暂不返回统计数据
+      todayNewFollows: 0,
+      isPrimary: false, // 暂不实现主推逻辑
+    }));
+
+    res.json({
+      code: 200,
+      message: '获取成功',
+      timestamp: Date.now(),
+      data: accounts
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      code: 500,
+      message: '获取失败',
+      timestamp: Date.now(),
+      error: error.message
+    });
+  }
+});
+
+/**
  * 员工信息登记
  */
 router.post('/register', async (req: Request, res: Response) => {

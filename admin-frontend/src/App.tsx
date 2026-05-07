@@ -3,8 +3,8 @@ import { MainLayout } from './components/layout/MainLayout'
 import { LoginPage } from './components/pages/LoginPage'
 import { Dashboard } from './components/dashboard/Dashboard'
 import EmployeesPage from './components/pages/EmployeesPage'
-import { PromotionPage } from './components/pages/PromotionPage'
-import { ReportsPage } from './components/pages/ReportsPage'
+import { PromotionDataPage } from './components/pages/PromotionDataPage'
+import { PromotionMaterialsPage } from './components/pages/PromotionMaterialsPage'
 import { SettingsPage } from './components/pages/SettingsPage'
 import { AccountsPage } from './components/pages/AccountsPage'
 
@@ -21,11 +21,11 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/" element={<MainLayout />}>
         <Route index element={<Dashboard />} />
-        <Route path="employees" element={<EmployeesPage />} />
-        <Route path="promotion" element={<PromotionPage />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="settings" element={<SettingsPage />} />
         <Route path="accounts" element={<AccountsPage />} />
+        <Route path="materials" element={<PromotionMaterialsPage />} />
+        <Route path="employees" element={<EmployeesPage />} />
+        <Route path="promotion-data" element={<PromotionDataPage />} />
+        <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

@@ -62,7 +62,11 @@ export function EmployeesPage() {
   }, [searchTerm, selectedDepartment])
 
   // 获取部门列表（从员工数据中提取）
-  const departments = ['全部部门', ...new Set(employees.map(e => e.department).filter(Boolean) as string[])]
+  const departments = ['全部部门', ...new Set(
+    (employees || [])
+      .map(e => e.department)
+      .filter((dept): dept is string => Boolean(dept))
+  )]
 
   // 添加员工
   const handleAddEmployee = async () => {

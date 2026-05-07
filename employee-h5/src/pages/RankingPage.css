@@ -1,260 +1,239 @@
-/* 排行榜页面样式 - 现代设计 */
+/* 排行榜页面样式 */
 .ranking-page {
   min-height: 100vh;
-  background: #f5f7fa;
-  padding-bottom: 100px;
-  position: relative;
+  background: #f5f6f7;
+  padding-bottom: 24px;
 }
 
-.ranking-page::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 30vh;
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-  z-index: -1;
-}
-
-/* 顶部导航 */
+/* 导航栏 */
 .navbar {
-  background: transparent;
-  color: white;
-  padding: 16px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 100;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-.navbar-left,
-.navbar-right {
-  width: 40px;
-  height: 40px;
+.navbar-left {
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(8px);
-}
-
-.navbar-left:active {
-  background: rgba(255, 255, 255, 0.25);
+  color: #333;
 }
 
 .navbar-left svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
 }
 
 .navbar-title {
-  flex: 1;
-  text-align: center;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a1a1a;
 }
 
-/* 时间筛选 */
+.navbar-right {
+  width: 32px;
+}
+
+/* 时间筛选器 */
 .filter-tabs {
+  background: white;
   display: flex;
-  gap: 10px;
-  padding: 16px;
-  background: transparent;
+  gap: 4px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .filter-tab {
   flex: 1;
-  height: 44px;
+  padding: 10px 12px;
   border: none;
-  border-radius: 14px;
+  background: #f5f6f7;
+  border-radius: 8px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
+  color: #666;
   cursor: pointer;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.25);
-  color: #c8d6ff;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
 }
 
 .filter-tab.active {
-  background: #fff;
-  color: #667eea;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  background: #07c160;
+  color: white;
+  font-weight: 600;
 }
 
-.filter-tab:not(.active):active {
-  background: rgba(255, 255, 255, 0.3);
+.filter-tab:hover:not(.active) {
+  background: #e8e9ea;
 }
 
-/* 我的排名卡片 - 现代设计 */
+/* 我的排名卡片 */
 .my-ranking-card {
-  background: #fff;
-  color: #1a1a2e;
-  margin: 0 16px 20px;
-  border-radius: 20px;
-  padding: 22px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
+  margin: 16px;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(7, 193, 96, 0.25);
 }
 
 .my-ranking-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .my-ranking-label {
+  color: rgba(255, 255, 255, 0.9);
   font-size: 14px;
-  color: #999;
   font-weight: 500;
 }
 
 .my-ranking-badge {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  padding: 6px 14px;
-  border-radius: 12px;
-  font-size: 13px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .my-ranking-stats {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr auto 1fr;
-  gap: 0;
-  align-items: center;
-  padding: 20px;
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
-  border-radius: 16px;
+  display: flex;
+  justify-content: space-around;
 }
 
 .my-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  text-align: center;
+  flex: 1;
 }
 
-.my-stat.highlight .my-stat-value {
-  color: #667eea;
+.my-stat.highlight {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 12px 0;
+  margin: 0 -8px;
 }
 
 .my-stat-value {
-  font-size: 28px;
-  font-weight: 800;
-  color: #1a1a2e;
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 4px;
 }
 
 .my-stat-label {
   font-size: 12px;
-  color: #999;
-  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .my-stat-divider {
   width: 1px;
-  height: 36px;
-  background: rgba(102, 126, 234, 0.2);
+  background: rgba(255, 255, 255, 0.2);
 }
 
-/* 前三名展示 - 现代设计 */
+/* 前三名区域 */
 .top-three-section {
   margin: 0 16px 20px;
 }
 
 .section-title {
   font-size: 16px;
-  font-weight: 700;
-  color: #1a1a2e;
-  margin-bottom: 14px;
-  padding-left: 4px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 16px;
 }
 
 .top-three-podium {
-  display: grid;
-  grid-template-columns: 1fr 1.2fr 1fr;
-  gap: 10px;
+  display: flex;
+  justify-content: center;
   align-items: flex-end;
+  gap: 8px;
+  padding: 20px 0;
 }
 
 .podium-item {
-  background: #fff;
-  border-radius: 20px;
-  padding: 18px 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  text-align: center;
   position: relative;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
 }
 
 .podium-item.first {
-  padding-top: 28px;
+  z-index: 2;
+  margin: 0 12px;
 }
 
-.podium-item.is-me {
-  border: 2px solid #667eea;
-  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+.podium-item.second {
+  transform: translateY(20px);
+}
+
+.podium-item.third {
+  transform: translateY(30px);
 }
 
 .crown {
   position: absolute;
-  top: -14px;
-  font-size: 28px;
-  animation: float 2s ease-in-out infinite;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  animation: bounce 2s infinite;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+@keyframes bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-5px); }
 }
 
 .podium-avatar {
   position: relative;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .rank-badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 22px;
-  height: 22px;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  font-weight: bold;
+  font-size: 14px;
+  font-weight: 700;
   color: white;
-  z-index: 1;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 2;
 }
 
 .rank-badge.gold {
-  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  background: linear-gradient(135deg, #ffd700 0%, #ffb900 100%);
+  box-shadow: 0 4px 12px rgba(255, 185, 0, 0.4);
 }
 
 .rank-badge.silver {
-  background: linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%);
+  background: linear-gradient(135deg, #c0c0c0 0%, #a0a0a0 100%);
+  box-shadow: 0 4px 12px rgba(160, 160, 160, 0.4);
 }
 
 .rank-badge.bronze {
-  background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%);
+  background: linear-gradient(135deg, #cd7f32 0%, #b87333 100%);
+  box-shadow: 0 4px 12px rgba(184, 115, 51, 0.4);
 }
 
 .avatar-circle {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   display: flex;
@@ -262,151 +241,129 @@
   justify-content: center;
   font-size: 20px;
   font-weight: 700;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .podium-item.first .avatar-circle {
-  width: 62px;
-  height: 62px;
-  font-size: 22px;
+  width: 64px;
+  height: 64px;
+  font-size: 24px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 6px 16px rgba(245, 87, 108, 0.35);
 }
 
 .podium-name {
   font-size: 14px;
   font-weight: 600;
-  color: #1a1a2e;
-  margin-bottom: 3px;
-}
-
-.podium-item.first .podium-name {
-  font-size: 16px;
-  font-weight: 700;
+  color: #333;
+  margin-bottom: 4px;
 }
 
 .podium-dept {
   font-size: 12px;
   color: #999;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .podium-stat {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  padding: 8px 14px;
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
-  border-radius: 12px;
+  margin-bottom: 8px;
 }
 
-.podium-stat.highlight {
-  background: rgba(102, 126, 234, 0.1);
-}
-
-.podium-stat .stat-number {
-  font-size: 18px;
+.podium-stat.highlight .stat-number {
+  font-size: 28px;
   font-weight: 700;
-  color: #667eea;
+  color: #07c160;
 }
 
-.podium-stat .stat-text {
-  font-size: 11px;
+.stat-number {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.stat-text {
+  font-size: 12px;
   color: #999;
 }
 
 .podium-bar {
-  width: 100%;
-  border-radius: 0 0 16px 16px;
-  margin-top: 10px;
+  width: 80px;
+  border-radius: 8px 8px 0 0;
+  margin: 0 auto;
 }
 
-.gold-bar {
-  height: 44px;
-  background: linear-gradient(to top, #FFD700, #FFA500);
+.podium-bar.gold-bar {
+  height: 120px;
+  background: linear-gradient(180deg, #ffd700 0%, #ffb900 100%);
 }
 
-.silver-bar {
-  height: 32px;
-  background: linear-gradient(to top, #C0C0C0, #A8A8A8);
+.podium-bar.silver-bar {
+  height: 90px;
+  background: linear-gradient(180deg, #c0c0c0 0%, #a0a0a0 100%);
 }
 
-.bronze-bar {
-  height: 24px;
-  background: linear-gradient(to top, #CD7F32, #A0522D);
+.podium-bar.bronze-bar {
+  height: 70px;
+  background: linear-gradient(180deg, #cd7f32 0%, #b87333 100%);
 }
 
-/* 排名列表 - 现代设计 */
+.podium-item.is-me {
+  transform: scale(1.05);
+}
+
+.podium-item.is-me .avatar-circle {
+  box-shadow: 0 0 0 3px #07c160;
+}
+
+/* 排名列表区域 */
 .ranking-list-section {
-  margin: 0 16px 16px;
-  min-height: 400px;
-}
-
-.loading-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px;
-  color: #999;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(102, 126, 234, 0.2);
-  border-top-color: #667eea;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 16px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+  margin: 0 16px;
 }
 
 .ranking-list {
   background: white;
-  border-radius: 20px;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 .ranking-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 18px;
-  border-bottom: 1px solid rgba(102, 126, 234, 0.08);
-  transition: all 0.3s ease;
+  padding: 16px;
+  border-bottom: 1px solid #f5f5f5;
+  transition: background 0.3s;
 }
 
 .ranking-item:last-child {
   border-bottom: none;
 }
 
-.ranking-item:active {
-  background: linear-gradient(135deg, #f8f9ff 0%, #f5f7ff 100%);
+.ranking-item:hover {
+  background: #f9f9f9;
 }
 
 .ranking-item.is-me {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  border-left: 4px solid #667eea;
+  background: linear-gradient(90deg, #f0fdf4 0%, white 100%);
+  border-left: 4px solid #07c160;
+  padding-left: 12px;
 }
 
 .item-rank {
-  width: 32px;
+  width: 48px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .rank-number {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
-  color: #999;
+  color: #333;
 }
 
 .item-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   display: flex;
@@ -414,8 +371,8 @@
   justify-content: center;
   font-size: 16px;
   font-weight: 600;
+  margin-right: 12px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 }
 
 .item-info {
@@ -424,98 +381,164 @@
 }
 
 .item-name {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   font-size: 15px;
   font-weight: 600;
-  color: #1a1a2e;
+  color: #333;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .me-tag {
-  font-size: 10px;
-  padding: 3px 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #07c160;
   color: white;
-  border-radius: 6px;
-  font-weight: 600;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
 }
 
 .item-dept {
   font-size: 13px;
   color: #999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .item-stats {
   display: flex;
-  gap: 14px;
-  flex-shrink: 0;
+  gap: 16px;
+  align-items: center;
 }
 
 .item-stat {
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #999;
+}
+
+.item-stat.secondary .stat-value {
+  font-size: 14px;
+  color: #666;
+}
+
+/* 加载状态 */
+.loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
 }
 
-.ranking-list .item-stat .stat-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: #8b5cf6 !important;
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f0f0f0;
+  border-top-color: #07c160;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
-.ranking-list .item-stat.secondary .stat-value {
-  color: #a855f7 !important;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-.ranking-list .item-stat .stat-label {
-  font-size: 11px;
-  color: #7c3aed !important;
-  font-weight: 500;
+.loading-container p {
+  color: #999;
+  font-size: 14px;
+  margin: 0;
 }
 
 /* 底部提示 */
 .ranking-footer {
   text-align: center;
-  padding: 30px;
+  padding: 24px 16px;
   color: #999;
   font-size: 13px;
   line-height: 1.8;
 }
 
-/* 适配小屏幕 */
+.ranking-footer p {
+  margin: 4px 0;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-state-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.empty-state-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.empty-state-description {
+  font-size: 14px;
+  color: #999;
+  margin: 0;
+}
+
+/* 小屏幕适配 */
 @media screen and (max-width: 375px) {
-  .top-three-podium {
-    gap: 8px;
+  .my-ranking-value {
+    font-size: 20px;
   }
 
-  .podium-item {
-    padding: 14px 8px;
+  .my-stat-value {
+    font-size: 20px;
+  }
+
+  .podium-bar.gold-bar {
+    height: 100px;
+  }
+
+  .podium-bar.silver-bar {
+    height: 75px;
+  }
+
+  .podium-bar.bronze-bar {
+    height: 60px;
   }
 
   .avatar-circle {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
-  }
-
-  .podium-item.first .avatar-circle {
     width: 48px;
     height: 48px;
     font-size: 18px;
   }
 
-  .my-stat-value {
+  .podium-item.first .avatar-circle {
+    width: 56px;
+    height: 56px;
     font-size: 22px;
   }
 
   .item-stats {
-    gap: 8px;
+    gap: 12px;
   }
 
-  .item-stat .stat-value {
-    font-size: 14px;
+  .stat-value {
+    font-size: 16px;
   }
 }

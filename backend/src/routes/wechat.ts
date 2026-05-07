@@ -1,424 +1,345 @@
-import { Router, Request, Response } from 'express';
+import express from 'express';
 import { pool } from '../config/database';
 import { logger } from '../utils/logger';
-import { ApiError } from '../middleware/errorHandler';
-import { WechatService } from '../services/wechat';
-import crypto from 'crypto';
-import axios from 'axios';
+import {
+  parseWechatEvent,
+  verifyWechatSignature,
+  generateTextMessage,
+} from '../services/wechatService';
 
-// 初始化微信服务
-const wechatService = new WechatService(
-  process.env.WECHAT_APP_ID || '',
-  process.env.WECHAT_APP_SECRET || ''
-);
+const router = express.Router();
 
-const router = Router();
+/**
+ * 解析微信推送的 XML 中的文本消息内容
+ */
+function parseTextContent(xml: string): string {
+  const match = xml.match(/<Content><!\[CDATA\[(.*?)\]\]><\/Content>/);
+  return match ? match[1].trim() : '';
+}
 
-// 微信服务器验证
-router.get('/callback', (req: Request, res: Response) => {
-  try {
-    const { signature, timestamp, nonce, echostr } = req.query;
+/**
+ * 微信服务器验证接口
+ * GET /api/wechat/webhook?signature=xxx&timestamp=xxx&nonce=xxx&echostr=xxx
+ */
+router.get('/webhook', (req, res) => {
+  const { signature, timestamp, nonce, echostr } = req.query;
+  const token = process.env.WECHAT_TOKEN;
 
-    // 你的Token（需要在微信公众号后台配置）
-    const token = process.env.WECHAT_TOKEN || 'your_token_here';
-
-    if (!signature || !timestamp || !nonce || !echostr) {
-      return res.status(400).send('Missing required parameters');
-    }
-
-    // 将token、timestamp、nonce三个参数进行字典序排序
-    const arr = [token, timestamp, nonce].sort();
-    const str = arr.join('');
-
-    // 进行sha1加密
-    const sha1 = crypto.createHash('sha1');
-    sha1.update(str);
-    const hash = sha1.digest('hex');
-
-    // 加密后的字符串与signature对比
-    if (hash === signature) {
-      logger.info('微信服务器验证成功');
-      res.send(echostr);
-    } else {
-      logger.warn('微信服务器验证失败', { signature, hash });
-      res.status(403).send('Invalid signature');
-    }
-  } catch (error) {
-    logger.error('微信验证错误', error);
-    res.status(500).send('Internal Server Error');
+  if (!token) {
+    logger.error('WECHAT_TOKEN 未配置');
+    return res.status(500).send('服务器配置错误');
   }
+
+  if (!verifyWechatSignature(signature as string, timestamp as string, nonce as string, token)) {
+    logger.warn('微信签名验证失败', { signature, timestamp, nonce });
+    return res.status(403).send('签名验证失败');
+  }
+
+  logger.info('微信服务器验证成功');
+  res.send(echostr);
 });
 
-// 微信消息和事件推送
-router.post('/callback', async (req: Request, res: Response) => {
+/**
+ * 接收微信推送事件和消息
+ * POST /api/wechat/webhook
+ *
+ * 支持的事件类型：
+ * - subscribe: 用户关注
+ * - SCAN: 扫描带参数二维码（已关注用户）
+ * - unsubscribe: 用户取消关注
+ * - 文本消息: 用户发送推广码（员工工号）
+ */
+router.post('/webhook', async (req, res) => {
   try {
-    const { signature, timestamp, nonce } = req.query;
-    const body = req.body;
+    const xml = req.body;
+    logger.info('收到微信推送');
 
-    // 验证签名
-    const token = process.env.WECHAT_TOKEN || 'your_token_here';
-    
-    if (signature && timestamp && nonce) {
-      const arr = [token, timestamp, nonce].sort();
-      const str = arr.join('');
-      const sha1 = crypto.createHash('sha1');
-      sha1.update(str);
-      const hash = sha1.digest('hex');
+    const event = parseWechatEvent(xml);
+    const msgType = event.MsgType;
 
-      if (hash !== signature) {
-        logger.warn('微信回调签名验证失败');
-        return res.status(403).send('Invalid signature');
+    logger.info('解析推送', {
+      msgType,
+      eventType: event.Event,
+      fromUser: event.FromUserName,
+      eventKey: event.EventKey,
+    });
+
+    let replyContent = '感谢关注！';
+
+    // 处理事件消息
+    if (msgType === 'event') {
+      if (event.Event === 'subscribe') {
+        replyContent = await handleSubscribeEvent(event);
+      } else if (event.Event === 'SCAN') {
+        await handleScanEvent(event);
+      } else if (event.Event === 'unsubscribe') {
+        await handleUnsubscribeEvent(event);
+        // 取关不回复消息
+        return res.send('success');
       }
     }
 
-    // 解析XML消息（这里简化处理，实际需要使用xml2js等库）
-    logger.info('收到微信推送', { body });
+    // 处理文本消息（推广码识别）
+    if (msgType === 'text') {
+      const textContent = parseTextContent(xml);
+      replyContent = await handleTextMessage(event.FromUserName, textContent);
+    }
 
-    // TODO: 解析XML获取消息类型和事件
-    // const xml = await parseXML(body);
-    
-    // 模拟处理不同事件
-    const mockEvent = {
-      ToUserName: 'gh_xxxxx',
-      FromUserName: 'openid_xxxxx',
-      CreateTime: Math.floor(Date.now() / 1000),
-      MsgType: 'event',
-      Event: 'subscribe', // subscribe(订阅), unsubscribe(取消订阅), SCAN(扫描带参数二维码)
-      EventKey: 'qrscene_EMP001_1234567890' // 场景值
-    };
-
-    const eventType = mockEvent.Event;
-    const openid = mockEvent.FromUserName;
-    const eventKey = mockEvent.EventKey || '';
-
-    await handleWechatEvent(eventType, openid, eventKey);
-
-    // 返回成功响应
+    const reply = generateTextMessage(event.FromUserName, event.ToUserName, replyContent);
+    res.set('Content-Type', 'application/xml');
+    res.send(reply);
+  } catch (error: any) {
+    logger.error('处理微信推送失败', error);
     res.send('success');
-  } catch (error) {
-    logger.error('处理微信回调错误', error);
-    res.status(500).send('Internal Server Error');
   }
 });
 
-// 处理微信事件
-async function handleWechatEvent(eventType: string, openid: string, eventKey: string) {
+/**
+ * 处理关注事件
+ * 订阅号关注事件不携带 scene 信息（没有带参数二维码），
+ * 所以只记录用户关注，不创建推广归因。
+ * 推广归因通过用户回复推广码（文本消息）来实现。
+ */
+async function handleSubscribeEvent(event: any): Promise<string> {
   try {
-    const connection = await pool.getConnection();
+    const { FromUserName: openid } = event;
 
-    try {
-      switch (eventType) {
-        case 'subscribe':
-          // 关注事件
-          if (eventKey.startsWith('qrscene_')) {
-            // 扫码关注
-            const sceneStr = eventKey.replace('qrscene_', '');
-            await handleScanFollow(connection, openid, sceneStr);
-          } else {
-            // 普通关注
-            await handleNormalFollow(connection, openid);
-          }
-          break;
+    logger.info('用户关注公众号', { openid });
 
-        case 'unsubscribe':
-          // 取消关注
-          await handleUnfollow(connection, openid);
-          break;
+    // 保存或更新用户信息
+    await pool.query(
+      `INSERT INTO wechat_users (openid, is_subscribed, subscribe_time, updated_at)
+       VALUES (?, TRUE, NOW(), NOW())
+       ON DUPLICATE KEY UPDATE
+       is_subscribed = TRUE,
+       subscribe_time = NOW(),
+       updated_at = NOW()`,
+      [openid]
+    );
 
-        case 'SCAN':
-          // 已关注用户扫描带参数二维码
-          await handleScan(connection, openid, eventKey);
-          break;
+    return '感谢关注！回复员工推广码即可完成推广归因~';
+  } catch (error: any) {
+    logger.error('处理关注事件失败', error);
+    return '感谢关注！';
+  }
+}
 
-        default:
-          logger.info('未处理的事件类型', { eventType });
+/**
+ * 处理扫描带参数二维码事件（服务号场景，订阅号不适用）
+ */
+async function handleScanEvent(event: any) {
+  try {
+    const { FromUserName: openid, EventKey: eventKey } = event;
+
+    logger.info('用户扫描二维码', { openid, eventKey });
+
+    if (eventKey) {
+      const parts = eventKey.split('_');
+      const promoterId = parts[0];
+
+      if (promoterId) {
+        await pool.query(
+          `INSERT INTO promotion_records (promoter_id, follower_openid, follow_time, source)
+           VALUES (?, ?, NOW(), 'qrcode')
+           ON DUPLICATE KEY UPDATE follow_time = NOW()`,
+          [promoterId, openid]
+        );
+
+        await pool.query(
+          `UPDATE employees SET promotion_count = COALESCE(promotion_count, 0) + 1 WHERE employee_id = ?`,
+          [promoterId]
+        );
+
+        logger.info('创建推广记录成功（扫描事件）', { promoterId, openid });
       }
-
-      // 记录事件日志
-      await connection.query(
-        'INSERT INTO follow_events (openid, event_type, event_key, created_at) VALUES (?, ?, ?, NOW())',
-        [openid, eventType, eventKey]
-      );
-
-    } finally {
-      connection.release();
     }
-  } catch (error) {
-    logger.error('处理微信事件失败', error);
+  } catch (error: any) {
+    logger.error('处理扫描事件失败', error);
   }
 }
 
-// 处理扫码关注
-async function handleScanFollow(connection: any, openid: string, sceneStr: string) {
+/**
+ * 处理取消关注事件
+ * 同时更新 follow_records 中该用户的关注状态
+ */
+async function handleUnsubscribeEvent(event: any) {
   try {
-    // 解析场景值获取员工ID
-    // 格式: emp_{employee_id}_{timestamp}
-    const match = sceneStr.match(/^emp_(.+?)_\d+$/);
-    
-    if (!match) {
-      logger.warn('无效的场景值', { sceneStr });
-      return;
-    }
+    const { FromUserName: openid } = event;
 
-    const employeeId = match[1];
+    logger.info('用户取消关注', { openid });
 
-    // 查找推广记录
-    const [promotions] = await connection.query(
-      'SELECT * FROM promotion_records WHERE scene_str = ?',
-      [sceneStr]
+    // 更新 wechat_users 关注状态
+    await pool.query(
+      `UPDATE wechat_users
+       SET is_subscribed = FALSE, unsubscribe_time = NOW(), updated_at = NOW()
+       WHERE openid = ?`,
+      [openid]
     );
 
-    const promoList = promotions as any[];
-    if (promoList.length === 0) {
-      logger.warn('未找到推广记录', { sceneStr });
-      return;
+    // 更新 follow_records 中该用户的所有记录为已取关
+    await pool.query(
+      `UPDATE follow_records
+       SET subscribe_status = 'unsubscribed', last_event_at = NOW()
+       WHERE wechat_openid = ? AND subscribe_status = 'subscribed'`,
+      [openid]
+    );
+
+    logger.info('用户取关状态更新完成', { openid });
+  } catch (error: any) {
+    logger.error('处理取消关注事件失败', error);
+  }
+}
+
+/**
+ * 处理文本消息 —— 推广码识别
+ * 用户在公众号对话框回复员工工号（推广码），系统：
+ * 1. 查找匹配的员工
+ * 2. 创建 follow_record（推广归因）
+ * 3. 更新员工推广计数
+ *
+ * @returns 回复给用户的文本消息
+ */
+async function handleTextMessage(openid: string, content: string): Promise<string> {
+  try {
+    if (!content) return '请输入推广码';
+
+    // 查找推广码对应的员工（推广码 = 员工工号）
+    const [employees] = await pool.query(
+      'SELECT employee_id, name FROM employees WHERE employee_id = ? AND status = 1',
+      [content]
+    );
+
+    if ((employees as any[]).length === 0) {
+      logger.info('推广码未匹配到员工', { openid, content });
+      return '推广码无效，请确认后重新输入。';
     }
 
-    const promotion = (promoList as any)[0];
+    const employee = (employees as any[])[0];
 
-    // 1. 获取用户信息
-    const userInfo = await wechatService.getUserInfo(openid);
-    
-    // 2. 检查是否已有关注记录
-    const [existing] = await connection.query(
-      'SELECT * FROM follow_records WHERE openid = ?',
-      [openid]
+    // 检查是否已经通过该推广码归因过
+    const [existing] = await pool.query(
+      `SELECT id FROM follow_records
+       WHERE wechat_openid = ? AND promotion_code = ? AND employee_id = ?`,
+      [openid, content, employee.employee_id]
     );
 
     if ((existing as any[]).length > 0) {
-      // 更新现有记录
-      await connection.query(
-        'UPDATE follow_records SET employee_id = ?, account_id = ?, status = 1, unsubscribed_at = NULL, updated_at = NOW() WHERE openid = ?',
-        [employeeId, promotion.account_id, openid]
-      );
-    } else {
-      // 3. 创建新的关注记录
-      await connection.query(
-        `INSERT INTO follow_records 
-        (openid, nickname, employee_id, account_id, subscribe_time, status) 
-        VALUES (?, ?, ?, ?, NOW(), 1)`,
-        [openid, userInfo.nickname || '', employeeId, promotion.account_id]
-      );
-
-      // 4. 更新推广记录的关注数
-      await connection.query(
-        'UPDATE promotion_records SET follow_count = follow_count + 1 WHERE id = ?',
-        [promotion.id]
-      );
+      return `您已通过 ${employee.name} 的推广码归因，无需重复操作。`;
     }
 
-    // 5. 检查扫码者是否是已登记的员工（双重身份）
-    const [employee] = await connection.query(
-      'SELECT employee_id, name FROM employee_info WHERE openid = ?',
+    // 获取用户昵称
+    const [users] = await pool.query(
+      'SELECT nickname FROM wechat_users WHERE openid = ?',
       [openid]
     );
+    const nickname = (users as any[]).length > 0 ? (users as any[])[0].nickname : null;
 
-    if ((employee as any[]).length > 0) {
-      const emp = (employee as any[])[0];
-      
-      // 6. 更新关注记录为员工
-      await connection.query(
-        `UPDATE follow_records 
-        SET is_employee = 1, 
-            employee_name = ?
-        WHERE openid = ?`,
-        [emp.name, openid]
-      );
+    // 创建 follow_record
+    await pool.query(
+      `INSERT INTO follow_records
+       (employee_id, promotion_code, wechat_openid, wechat_nickname, subscribe_status, first_reply_at, last_event_at, created_at)
+       VALUES (?, ?, ?, ?, 'subscribed', NOW(), NOW(), NOW())`,
+      [employee.employee_id, content, openid, nickname]
+    );
 
-      // 7. 更新员工信息表的关注状态
-      await connection.query(
-        'UPDATE employee_info SET is_followed = 1, follow_time = NOW() WHERE openid = ?',
-        [openid]
-      );
+    // 更新员工推广计数
+    await pool.query(
+      `UPDATE employees SET promotion_count = COALESCE(promotion_count, 0) + 1, last_promotion_time = NOW()
+       WHERE employee_id = ?`,
+      [employee.employee_id]
+    );
 
-      logger.info('扫码关注：识别为已登记员工（双重身份）', { 
-        openid, 
-        promoter: employeeId,
-        self: emp.employee_id,
-        name: emp.name 
+    // 同步更新 wechat_users 的 promoter_id
+    await pool.query(
+      `UPDATE wechat_users SET promoter_id = ?, scene_str = ? WHERE openid = ?`,
+      [employee.employee_id, content, openid]
+    );
+
+    logger.info('推广码归因成功', {
+      openid,
+      promotionCode: content,
+      employeeId: employee.employee_id,
+      employeeName: employee.name,
+    });
+
+    return `归因成功！您已通过 ${employee.name} 的推广关注本公众号。`;
+  } catch (error: any) {
+    logger.error('处理推广码失败', { openid, content, error: error.message });
+    return '系统繁忙，请稍后重试。';
+  }
+}
+
+/**
+ * 模拟关注事件（用于测试）
+ * POST /api/wechat/simulate/subscribe
+ */
+router.post('/simulate/subscribe', async (req, res) => {
+  try {
+    const { openid, promoterId, sceneStr } = req.body;
+
+    if (!openid) {
+      return res.status(400).json({
+        code: 400,
+        message: 'openid 参数必填',
+        timestamp: Date.now(),
       });
     }
 
-    logger.info('处理扫码关注成功', { openid, employeeId, sceneStr });
+    logger.info('模拟关注事件', { openid, promoterId, sceneStr });
 
-  } catch (error) {
-    logger.error('处理扫码关注失败', error);
-  }
-}
-
-// 处理普通关注
-async function handleNormalFollow(connection: any, openid: string) {
-  try {
-    // 1. 获取用户信息
-    const userInfo = await wechatService.getUserInfo(openid);
-    
-    // 2. 检查是否已有关注记录
-    const [existing] = await connection.query(
-      'SELECT * FROM follow_records WHERE openid = ?',
-      [openid]
+    // 保存或更新用户信息
+    await pool.query(
+      `INSERT INTO wechat_users (openid, is_subscribed, subscribe_time, updated_at, promoter_id, scene_str)
+       VALUES (?, TRUE, NOW(), NOW(), ?, ?)
+       ON DUPLICATE KEY UPDATE
+       is_subscribed = TRUE,
+       subscribe_time = NOW(),
+       updated_at = NOW(),
+       promoter_id = ?,
+       scene_str = ?`,
+      [openid, promoterId || null, sceneStr || null, promoterId || null, sceneStr || null]
     );
 
-    if ((existing as any[]).length > 0) {
-      // 重新关注，更新状态
-      await connection.query(
-        'UPDATE follow_records SET status = 1, unsubscribed_at = NULL, updated_at = NOW() WHERE openid = ?',
-        [openid]
+    // 如果有推广人，创建推广记录
+    if (promoterId) {
+      await pool.query(
+        `INSERT INTO promotion_records (promoter_id, follower_openid, follow_time, source)
+         VALUES (?, ?, NOW(), 'qrcode')
+         ON DUPLICATE KEY UPDATE
+         follow_time = NOW()`,
+        [promoterId, openid]
       );
-    } else {
-      // 3. 创建新的关注记录（先创建）
-      await connection.query(
-        `INSERT INTO follow_records 
-        (openid, nickname, subscribe_time, status) 
-        VALUES (?, ?, NOW(), 1)`,
-        [openid, userInfo.nickname || '']
+
+      // 更新推广人的推广数量
+      await pool.query(
+        `UPDATE employees
+         SET promotion_count = promotion_count + 1
+         WHERE employee_id = ?`,
+        [promoterId]
       );
+
+      logger.info('创建推广记录成功（模拟）', { promoterId, openid });
     }
-
-    // 4. 检查是否是已登记的员工（场景B：先登记，后关注）
-    const [employee] = await connection.query(
-      'SELECT employee_id, name, phone, department, position FROM employee_info WHERE openid = ?',
-      [openid]
-    );
-
-    if ((employee as any[]).length > 0) {
-      const emp = (employee as any[])[0];
-      
-      // 5. 是员工，更新关注记录
-      await connection.query(
-        `UPDATE follow_records 
-        SET is_employee = 1, 
-            employee_id = ?,
-            employee_name = ?
-        WHERE openid = ?`,
-        [emp.employee_id, emp.name, openid]
-      );
-
-      // 6. 更新员工信息表的关注状态
-      await connection.query(
-        'UPDATE employee_info SET is_followed = 1, follow_time = NOW() WHERE openid = ?',
-        [openid]
-      );
-
-      logger.info('关注事件：识别为已登记员工', { 
-        openid, 
-        employee_id: emp.employee_id,
-        name: emp.name 
-      });
-    }
-
-    logger.info('处理普通关注成功', { openid });
-
-  } catch (error) {
-    logger.error('处理普通关注失败', error);
-  }
-}
-
-// 处理取消关注
-async function handleUnfollow(connection: any, openid: string) {
-  try {
-    // 1. 更新关注记录状态
-    await connection.query(
-      'UPDATE follow_records SET status = 0, unsubscribed_at = NOW(), updated_at = NOW() WHERE openid = ? AND status = 1',
-      [openid]
-    );
-
-    // 2. 如果是员工，更新员工信息表
-    await connection.query(
-      'UPDATE employee_info SET is_followed = 0, follow_time = NULL WHERE openid = ?',
-      [openid]
-    );
-
-    logger.info('处理取消关注成功', { openid });
-
-  } catch (error) {
-    logger.error('处理取消关注失败', error);
-  }
-}
-
-// 处理扫码（已关注用户）
-async function handleScan(connection: any, openid: string, eventKey: string) {
-  try {
-    // 解析场景值
-    const match = eventKey.match(/^emp_(.+?)_\d+$/);
-    
-    if (!match) {
-      logger.warn('无效的场景值', { eventKey });
-      return;
-    }
-
-    const employeeId = match[1];
-
-    // 查找推广记录
-    const [promotions] = await connection.query(
-      'SELECT * FROM promotion_records WHERE scene_str = ?',
-      [eventKey]
-    );
-
-    const promoList = promotions as any[];
-    if (promoList.length > 0) {
-      // 更新推广记录的扫码数
-      await connection.query(
-        'UPDATE promotion_records SET scan_count = scan_count + 1 WHERE id = ?',
-        [(promoList as any)[0].id]
-      );
-    }
-
-    logger.info('处理扫码成功', { openid, employeeId, eventKey });
-
-  } catch (error) {
-    logger.error('处理扫码失败', error);
-  }
-}
-
-// 创建员工登记菜单
-router.post('/create-employee-menu', async (req: Request, res: Response) => {
-  try {
-    const accessToken = await wechatService.getAccessToken();
-    
-    const menu = {
-      button: [
-        {
-          name: "员工服务",
-          sub_button: [
-            {
-              type: "view",
-              name: "员工登记",
-              url: `${process.env.H5_URL || 'http://your-domain.com'}/register.html?openid={openid}`,
-            },
-            {
-              type: "view",
-              name: "我的推广",
-              url: `${process.env.H5_URL || 'http://your-domain.com'}/my-promotion.html?openid={openid}`,
-            },
-          ]
-        },
-      ]
-    };
-
-    const response = await axios.post(
-      `https://api.weixin.qq.com/cgi-bin/menu/create?access_token=${accessToken}`,
-      menu
-    );
 
     res.json({
       code: 200,
-      message: '菜单创建成功',
-      data: response.data
+      message: '模拟关注成功',
+      timestamp: Date.now(),
+      data: {
+        openid,
+        promoterId,
+        sceneStr,
+      },
     });
   } catch (error: any) {
-    logger.error('创建菜单失败', error);
+    logger.error('模拟关注失败', error);
     res.status(500).json({
       code: 500,
-      message: '创建菜单失败',
-      error: error.message
+      message: '模拟关注失败',
+      timestamp: Date.now(),
+      error: error.message,
     });
   }
 });
 
 export default router;
-
-// 导出获取微信服务的函数
-export function getWechatService(appId: string, appSecret: string): WechatService {
-  return new WechatService(appId, appSecret);
-}
-

@@ -3,12 +3,53 @@ import { pool } from '../config/database';
 import { authenticate } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import smsService from '../services/smsService';
-import { getWechatService } from '../routes/wechat';
 import crypto from 'crypto';
 import QRCode from 'qrcode';
 import axios from 'axios';
+import { createQrCode as createWechatQrCode } from '../services/wechatService';
 
 const router = Router();
+
+/**
+ * H5 端获取公众号列表（无需认证）
+ * GET /api/employee-binding/accounts
+ */
+router.get('/accounts', async (req: Request, res: Response) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT id, account_name, wechat_id, account_type, verified, qr_code_url, avatar, description FROM wechat_account_configs WHERE status = 1 ORDER BY created_at DESC'
+    );
+
+    const accounts = (rows as any[]).map((acc: any) => ({
+      id: acc.id.toString(),
+      name: acc.account_name,
+      wechatId: acc.wechat_id,
+      appId: '',
+      appSecret: '',
+      accountType: acc.account_type === 'service' ? 'service' : 'subscription',
+      verified: acc.verified === 1,
+      qrCodeUrl: acc.qr_code_url || '',
+      avatar: acc.avatar || '',
+      totalFollowers: 0,
+      todayNewFollows: 0,
+      isPrimary: false,
+    }));
+
+    res.json({
+      code: 200,
+      message: '获取成功',
+      timestamp: Date.now(),
+      data: accounts
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      code: 500,
+      message: '获取失败',
+      timestamp: Date.now(),
+      error: error.message
+    });
+  }
+});
 
 // 绑定员工身份（通过手机号验证）
 router.post('/bind', async (req: Request, res: Response) => {
@@ -405,8 +446,8 @@ const bindingCodes = new Map<string, {
   type: 'universal' | 'personal';
   employeeId?: string;
   employeeName?: string;
-  accountId: string;
-  createdAt: number;
+  accountId?: string;
+  createdAt?: number;
   expiresAt: number;
 }>();
 
@@ -416,34 +457,32 @@ const bindingCodes = new Map<string, {
  */
 router.post('/qrcode/test', async (req: Request, res: Response) => {
   try {
-    const { type = 'universal', employeeId, employeeName } = req.body;
-    
+    const { type = 'universal', employeeId, employeeName, accountId = '1' } = req.body;
+
     // 生成唯一的场景值
     const sceneStr = type === 'personal' && employeeId
       ? `bind_personal_${employeeId}_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`
       : `bind_universal_test_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-    
+
     // 模拟微信二维码ticket
     const ticket = `TICKET_${crypto.randomBytes(16).toString('hex')}`;
-    
+
     const expiresAt = Date.now() + (type === 'personal' ? 24 : 7 * 24) * 60 * 60 * 1000;
-    
-    // 存储绑定码信息
+
+    // 存储绑定码信息，使用传入的 accountId
     bindingCodes.set(sceneStr, {
       type: type === 'personal' ? 'personal' : 'universal',
       employeeId: type === 'personal' ? employeeId : undefined,
       employeeName: type === 'personal' ? employeeName : undefined,
-      accountId: 'test',
+      accountId: accountId.toString(), // 使用传入的公众号ID
       createdAt: Date.now(),
       expiresAt,
     });
 
     // 生成本地二维码图片（base64）
-    // 使用真实的微信公众号APPID进行OAuth授权
-    const appId = process.env.WECHAT_APP_ID || 'wxbfe0c057c9353ac2';
-    const redirectUri = encodeURIComponent('http://localhost:3000/api/employee-binding/callback');
-    const scanUrl = `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=${sceneStr}#wechat_redirect`;
-    
+    // 直接跳转到 H5 员工端绑定页面，使用局域网地址（微信浏览器可以访问）
+    const scanUrl = `http://192.168.100.200:5174/bind?scene=${sceneStr}&type=${type}`;
+
     const qrCodeDataUrl = await QRCode.toDataURL(scanUrl, {
       width: 300,
       margin: 2,
@@ -453,7 +492,7 @@ router.post('/qrcode/test', async (req: Request, res: Response) => {
       },
     });
 
-    logger.info('生成测试绑定码', { type, employeeId, sceneStr });
+    logger.info('生成测试绑定码', { type, employeeId, accountId, sceneStr });
 
     res.json({
       code: 200,
@@ -461,10 +500,12 @@ router.post('/qrcode/test', async (req: Request, res: Response) => {
       timestamp: Date.now(),
       data: {
         sceneStr,
+        scanUrl, // 返回绑定链接
         qrCodeUrl: qrCodeDataUrl, // 返回base64图片
         ticket,
         expireSeconds: type === 'personal' ? 86400 : 604800,
         expiresAt,
+        accountId: accountId.toString(), // 返回公众号ID
         employee: type === 'personal' && employeeId ? {
           employeeId,
           name: employeeName || '测试员工',
@@ -478,6 +519,73 @@ router.post('/qrcode/test', async (req: Request, res: Response) => {
     res.status(500).json({
       code: 500,
       message: '生成绑定码失败',
+      timestamp: Date.now(),
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * 生成微信推广二维码（使用真实微信 API）
+ * POST /api/employee-binding/qrcode/wechat
+ */
+router.post('/qrcode/wechat', async (req: Request, res: Response) => {
+  try {
+    const { type = 'universal', employeeId, employeeName, accountId = 1 } = req.body;
+    
+    // 验证微信公众号配置
+    if (!process.env.WECHAT_APP_ID || !process.env.WECHAT_APP_SECRET) {
+      return res.status(500).json({
+        code: 500,
+        message: '微信 API 未配置，请配置 WECHAT_APP_ID 和 WECHAT_APP_SECRET',
+        timestamp: Date.now(),
+      });
+    }
+
+    // 生成唯一的场景值（用于追踪推广人）
+    const sceneStr = type === 'personal' && employeeId
+      ? `qrscene_${employeeId}_${Date.now()}`
+      : `qrscene_universal_${Date.now()}`;
+    
+    logger.info('生成微信推广二维码', { type, employeeId, sceneStr });
+
+    // 调用微信 API 生成二维码
+    const qrCodeUrl = await createWechatQrCode(sceneStr, 2592000); // 30 天有效期
+
+    const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
+
+    // 存储绑定码信息（用于后续验证）
+    bindingCodes.set(sceneStr, {
+      type: type === 'personal' ? 'personal' : 'universal',
+      employeeId: type === 'personal' ? employeeId : undefined,
+      employeeName: type === 'personal' ? employeeName : undefined,
+      accountId: accountId.toString(),
+      createdAt: Date.now(),
+      expiresAt,
+    });
+
+    logger.info('微信推广二维码生成成功', { sceneStr, qrCodeUrl });
+
+    res.json({
+      code: 200,
+      message: '生成成功',
+      timestamp: Date.now(),
+      data: {
+        sceneStr,
+        qrCodeUrl, // 微信二维码图片 URL
+        expireSeconds: 2592000, // 30 天
+        expiresAt,
+        employee: type === 'personal' && employeeId ? {
+          employeeId,
+          name: employeeName || '员工',
+        } : undefined,
+      },
+    });
+  } catch (error: any) {
+    logger.error('生成微信推广二维码失败', { error: error.message });
+    res.status(500).json({
+      code: 500,
+      message: '生成二维码失败',
       timestamp: Date.now(),
       error: error.message,
     });
@@ -529,11 +637,7 @@ router.post('/qrcode/universal', async (req: Request, res: Response) => {
     });
 
     // 调用微信API生成二维码
-    const wechatService = getWechatService(account.app_id, account.app_secret);
-    const qrResult = await wechatService.createQrCode(sceneStr, 7 * 24 * 60 * 60);
-
-    // 构建二维码图片URL
-    const qrCodeUrl = `https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=${encodeURIComponent(qrResult.ticket || '')}`;
+    const qrCodeUrl = await createWechatQrCode(sceneStr, 7 * 24 * 60 * 60);
 
     logger.info('生成通用绑定码成功', { accountId, sceneStr });
 
@@ -544,8 +648,7 @@ router.post('/qrcode/universal', async (req: Request, res: Response) => {
       data: {
         sceneStr,
         qrCodeUrl,
-        ticket: qrResult.ticket,
-        expireSeconds: qrResult.expire_seconds,
+        expireSeconds: 7 * 24 * 60 * 60,
         expiresAt,
       },
     });
@@ -635,11 +738,7 @@ router.post('/qrcode/personal', async (req: Request, res: Response) => {
     });
 
     // 调用微信API生成二维码
-    const wechatService = getWechatService(account.app_id, account.app_secret);
-    const qrResult = await wechatService.createQrCode(sceneStr, 24 * 60 * 60);
-
-    // 构建二维码图片URL
-    const qrCodeUrl = `https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=${encodeURIComponent(qrResult.ticket || '')}`;
+    const qrCodeUrl = await createWechatQrCode(sceneStr, 24 * 60 * 60);
 
     logger.info('生成员工专属绑定码成功', { employeeId, sceneStr });
 
@@ -650,8 +749,7 @@ router.post('/qrcode/personal', async (req: Request, res: Response) => {
       data: {
         sceneStr,
         qrCodeUrl,
-        ticket: qrResult.ticket,
-        expireSeconds: qrResult.expire_seconds,
+        expireSeconds: 24 * 60 * 60,
         expiresAt,
         employee: {
           employeeId: employee.employee_id,
@@ -751,77 +849,61 @@ export async function handleBindingScanEvent(
 
 /**
  * 通用绑定码 - 员工填写信息后提交绑定
+ * 支持有码模式（sceneStr验证）和无码模式（直接绑定，用于测试）
  */
 router.post('/bind/universal', async (req: Request, res: Response) => {
   try {
     const { sceneStr, openid, employeeNo, name, department, phone } = req.body;
 
-    // 验证绑定码
-    const codeInfo = bindingCodes.get(sceneStr);
-    if (!codeInfo || codeInfo.type !== 'universal') {
-      return res.status(400).json({
-        code: 400,
-        message: '绑定码无效或已过期',
-        timestamp: Date.now(),
-      });
-    }
-
-    if (Date.now() > codeInfo.expiresAt) {
-      bindingCodes.delete(sceneStr);
-      return res.status(400).json({
-        code: 400,
-        message: '绑定码已过期',
-        timestamp: Date.now(),
-      });
+    // 如果有 sceneStr，尝试验证绑定码
+    if (sceneStr) {
+      const codeInfo = bindingCodes.get(sceneStr);
+      if (!codeInfo || codeInfo.type !== 'universal') {
+        // 绑定码无效但不清空表单，让用户可以重试或跳过
+        logger.warn('绑定码验证未通过，降级为无码模式', { sceneStr });
+      } else if (Date.now() > codeInfo.expiresAt) {
+        bindingCodes.delete(sceneStr);
+        logger.warn('绑定码已过期，降级为无码模式', { sceneStr });
+      }
     }
 
     // 检查工号是否已存在
     const [existing] = await pool.query(
-      'SELECT employee_id FROM employees WHERE employee_no = ?',
+      'SELECT employee_id FROM employees WHERE employee_id = ?',
       [employeeNo]
     );
 
-    let employeeId: string;
+    let dbEmployeeId: string;
 
     if ((existing as any[]).length > 0) {
       // 更新现有员工
-      employeeId = (existing as any[])[0].employee_id;
+      dbEmployeeId = (existing as any[])[0].employee_id;
       await pool.query(
         'UPDATE employees SET name = ?, department = ?, phone = ? WHERE employee_id = ?',
-        [name, department, phone, employeeId]
+        [name, department, phone, dbEmployeeId]
       );
     } else {
       // 创建新员工
       const [result] = await pool.query(
-        'INSERT INTO employees (employee_no, name, department, phone, status, created_at) VALUES (?, ?, ?, ?, 1, NOW())',
+        'INSERT INTO employees (employee_id, name, department, phone, status, created_at) VALUES (?, ?, ?, ?, 1, NOW())',
         [employeeNo, name, department, phone]
       );
-      employeeId = (result as any).insertId.toString();
+      dbEmployeeId = (result as any).insertId.toString();
     }
 
-    // 创建绑定关系
-    await pool.query(
-      `INSERT INTO employee_bindings (employee_id, openid, is_verified, verification_method, verified_at)
-       VALUES (?, ?, TRUE, 'universal_qrcode', NOW())
-       ON DUPLICATE KEY UPDATE
-       employee_id = VALUES(employee_id),
-       is_verified = TRUE,
-       verification_method = 'universal_qrcode',
-       verified_at = NOW()`,
-      [employeeId, openid]
-    );
+    // 使用绑定码时删除（防止重复使用）
+    if (sceneStr && bindingCodes.has(sceneStr)) {
+      bindingCodes.delete(sceneStr);
+    }
 
-    // 删除绑定码
-    bindingCodes.delete(sceneStr);
-
-    logger.info('通用绑定码绑定成功', { employeeId, openid, employeeNo });
+    logger.info('员工绑定成功', { dbEmployeeId, openid, employeeNo, name, mode: sceneStr ? 'qrcode' : 'direct' });
 
     res.json({
       code: 200,
       message: '绑定成功',
       timestamp: Date.now(),
       data: {
-        employeeId,
+        employeeId: dbEmployeeId,
         name,
         department,
       },

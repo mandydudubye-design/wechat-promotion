@@ -7,7 +7,7 @@ import { Badge } from '../ui/badge'
 import { Select } from '../ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
-import { Plus, Upload, Download, Edit, Trash2, QrCode, Smartphone, Users, UserCheck, UserX, Filter, X, FileSpreadsheet } from 'lucide-react'
+import { Plus, Upload, Download, Edit, Trash2, QrCode, Smartphone, Users, UserCheck, UserX, Filter, X, FileSpreadsheet, Copy } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { mockOfficialAccounts } from '../../data/mockData'
 
@@ -89,6 +89,7 @@ export default function EmployeesPage() {
   const [qrCodeData, setQrCodeData] = useState<any>(null)
   const [qrMode, setQrMode] = useState<'universal' | 'personal'>('universal')
   const [qrEmployee, setQrEmployee] = useState<Employee | null>(null)
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('1') // 默认选择第一个公众号
   
   // 新增/编辑表单
   const [formData, setFormData] = useState({
@@ -317,7 +318,7 @@ export default function EmployeesPage() {
     setQrLoading(true)
     setQrDialogOpen(true)
     setQrCodeData(null)
-    
+
     try {
       const response = await fetch(`${API_BASE}/employee-binding/qrcode/test`, {
         method: 'POST',
@@ -327,12 +328,13 @@ export default function EmployeesPage() {
         body: JSON.stringify({
           type: 'personal',
           employeeId: employee.id,
-          employeeName: employee.name
+          employeeName: employee.name,
+          accountId: selectedAccountId // 添加公众号ID
         })
       })
-      
+
       const result = await response.json()
-      
+
       if (result.code === 200) {
         setQrCodeData(result.data)
       } else {
@@ -355,7 +357,7 @@ export default function EmployeesPage() {
     setQrLoading(true)
     setQrDialogOpen(true)
     setQrCodeData(null)
-    
+
     try {
       const response = await fetch(`${API_BASE}/employee-binding/qrcode/test`, {
         method: 'POST',
@@ -363,12 +365,13 @@ export default function EmployeesPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          type: 'universal'
+          type: 'universal',
+          accountId: selectedAccountId // 添加公众号ID
         })
       })
-      
+
       const result = await response.json()
-      
+
       if (result.code === 200) {
         setQrCodeData(result.data)
       } else {
@@ -393,6 +396,30 @@ export default function EmployeesPage() {
       hour: '2-digit',
       minute: '2-digit'
     })
+  }
+
+  // 复制绑定链接
+  const handleCopyLink = async () => {
+    try {
+      // 重新生成绑定码，确保链接有效
+      const response = await fetch('http://localhost:3000/api/employee-binding/qrcode/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: qrEmployee ? 'personal' : 'universal', employeeId: qrEmployee?.employeeNo, employeeName: qrEmployee?.name })
+      })
+      const result = await response.json()
+
+      if (result.code === 200 && result.data.scanUrl) {
+        const link = result.data.scanUrl
+        await navigator.clipboard.writeText(link)
+        alert('链接已复制到剪贴板！\n\n请在微信中粘贴打开')
+      } else {
+        alert('生成链接失败，请重试')
+      }
+    } catch (error) {
+      console.error('复制失败:', error)
+      alert('复制失败，请重试')
+    }
   }
 
   return (
@@ -796,6 +823,22 @@ export default function EmployeesPage() {
               {qrMode === 'universal' ? '通用绑定码' : `${qrEmployee?.name} 的专属绑定码`}
             </DialogTitle>
           </DialogHeader>
+          {/* 公众号选择器 */}
+          <div className="mb-4">
+            <Label className="text-sm font-medium">选择要关联的公众号</Label>
+            <select
+              className="mt-1 w-full px-3 py-2 border rounded-md text-sm"
+              value={selectedAccountId}
+              onChange={(e) => setSelectedAccountId(e.target.value)}
+              disabled={qrLoading || !!qrCodeData}
+            >
+              {mockOfficialAccounts.map(account => (
+                <option key={account.id} value={account.id}>
+                  {account.name} ({account.accountType === 'service' ? '服务号' : '订阅号'})
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="flex flex-col items-center py-4">
             {qrLoading ? (
               <div className="w-[200px] h-[200px] flex items-center justify-center bg-gray-100 rounded-lg">
@@ -813,6 +856,15 @@ export default function EmployeesPage() {
                   <div className="mt-4 text-center">
                     <p className="font-medium">{qrCodeData.employee.name}</p>
                     <p className="text-sm text-muted-foreground">{qrCodeData.employee.department}</p>
+                  </div>
+                )}
+                {/* 显示关联的公众号 */}
+                {selectedAccountId && (
+                  <div className="mt-3 text-center">
+                    <p className="text-xs text-muted-foreground">关联公众号：</p>
+                    <p className="text-sm font-medium text-blue-600">
+                      {mockOfficialAccounts.find(acc => acc.id === selectedAccountId)?.name || '未知'}
+                    </p>
                   </div>
                 )}
                 <div className="mt-4 text-center text-sm text-muted-foreground">
@@ -833,17 +885,27 @@ export default function EmployeesPage() {
               关闭
             </Button>
             {qrCodeData && (
-              <Button 
-                onClick={() => {
-                  // 下载二维码图片
-                  const link = document.createElement('a')
-                  link.href = qrCodeData.qrCodeUrl
-                  link.download = `绑定码_${qrEmployee?.name || '通用'}.png`
-                  link.click()
-                }}
-              >
-                下载二维码
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleCopyLink}
+                  className="gap-2"
+                >
+                  <Copy className="h-4 w-4" />
+                  复制链接
+                </Button>
+                <Button
+                  onClick={() => {
+                    // 下载二维码图片
+                    const link = document.createElement('a')
+                    link.href = qrCodeData.qrCodeUrl
+                    link.download = `绑定码_${qrEmployee?.name || '通用'}.png`
+                    link.click()
+                  }}
+                >
+                  下载二维码
+                </Button>
+              </>
             )}
           </DialogFooter>
         </DialogContent>

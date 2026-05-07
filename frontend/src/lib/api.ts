@@ -166,6 +166,7 @@ export interface WechatAccount {
   id: number;
   account_name: string;
   account_id: string;
+  account_type: string;
   app_id: string | null;
   app_secret?: string | null;
   qr_code_url: string | null;
@@ -187,6 +188,7 @@ export async function getAccounts(): Promise<WechatAccount[]> {
 export interface CreateAccountParams {
   account_name: string;
   account_id: string;
+  account_type: string;
   app_id?: string;
   app_secret?: string;
 }
@@ -200,6 +202,7 @@ export async function createAccount(params: CreateAccountParams): Promise<void> 
 
 export interface UpdateAccountParams {
   account_name?: string;
+  account_type?: string;
   app_id?: string;
   app_secret?: string;
 }

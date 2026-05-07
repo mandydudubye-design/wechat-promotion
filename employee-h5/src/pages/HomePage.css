@@ -399,6 +399,22 @@
   margin-bottom: 16px;
   position: relative;
   overflow: hidden;
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qrcode-image {
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.loading-qrcode {
+  color: #666;
+  font-size: 14px;
 }
 
 .qrcode-box::before {

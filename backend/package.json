@@ -15,6 +15,7 @@
     "sync": "ts-node src/scripts/syncStatus.ts",
     "test-api": "ts-node src/scripts/testApi.ts",
     "test-wechat": "ts-node src/scripts/testWechat.ts",
+    "test-wechat-api": "ts-node src/scripts/testWechatApi.ts",
     "install-sms": "npm install @alicloud/dysmsapi20170525 @alicloud/openapi-client",
     "test": "echo \"Error: no test specified\" && exit 1",
     "copy-public": "xcopy /E /I /Y public dist\\\\public",
@@ -30,8 +31,10 @@
   "dependencies": {
     "@alicloud/dysmsapi20170525": "^3.0.1",
     "@alicloud/openapi-client": "^0.4.6",
+    "@types/multer": "^2.1.0",
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^12.8.0",
     "cors": "^2.8.5",
     "dotenv": "^17.3.1",
     "exceljs": "^4.4.0",
@@ -40,6 +43,7 @@
     "joi": "^17.11.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "multer": "^2.1.1",
     "mysql2": "^3.6.5",
     "qrcode": "^1.5.4",
     "winston": "^3.11.0"
